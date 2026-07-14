@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+  <html lang="ja">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>返済負担 かんたん30秒診断|あなたの毎月の返済、軽くできる可能性は?</title>
+  <meta name="description" content="カードローンも、友人・家族からの借金も、事業資金もOK。8つの質問に答えるだけで、あなたの返済負担を軽くできる可能性を無料チェック。匿名OK・30秒。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+  :root{
+  --navy:#1c2b4a;
+--ink:#2a3446;
+--mist:#eef3f8;
+  --cloud:#ffffff;
+  --teal:#0e9f7e;
+--teal-deep:#0b8368;
+--amber:#f2a93b;
+  --line:#06c755;
+--line-deep:#05a648;
+--soft:#8695ad;
+--radius:18px;
+--shadow:0 8px 28px rgba(28,43,74,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+  body{
+  font-family:'Noto Sans JP',sans-serif;
+background:linear-gradient(180deg,var(--mist) 0%,#e2ecf5 100%);
+  color:var(--ink);
+min-height:100vh;
+line-height:1.7;
+}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 48px;}
+.disp{font-family:'Zen Maru Gothic',sans-serif;}
+
+header{padding:18px 4px 6px;display:flex;align-items:center;gap:8px;}
+.logo-dot{width:12px;height:12px;border-radius:50%;background:var(--teal);}
+.logo{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:14px;color:var(--navy);letter-spacing:.06em;}
+
+.hero{padding:22px 4px 18px;text-align:center;}
+.hero .eyebrow{display:inline-block;background:var(--navy);color:#fff;font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.08em;margin-bottom:14px;}
+.hero h1{font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:26px;line-height:1.45;color:var(--navy);}
+.hero h1 em{font-style:normal;color:var(--teal);background:linear-gradient(transparent 62%,#c9efe4 62%);}
+  .hero p{font-size:13.5px;color:var(--soft);margin-top:10px;}
+.badges{display:flex;justify-content:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.badge{background:var(--cloud);border:1.5px solid #d8e2ee;border-radius:999px;font-size:11.5px;font-weight:700;color:var(--navy);padding:5px 12px;}
+
+.card{background:var(--cloud);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 22px;margin-top:10px;}
+
+  .progress{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.bar{flex:1;height:8px;background:var(--mist);border-radius:99px;overflow:hidden;}
+.bar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),#37c39f);border-radius:99px;transition:width .35s ease;}
+.pnum{font-size:12px;font-weight:700;color:var(--soft);min-width:38px;text-align:right;}
+
+.qtitle{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:19px;color:var(--navy);margin-bottom:4px;}
+.qsub{font-size:12.5px;color:var(--soft);margin-bottom:16px;}
+.opts{display:grid;gap:10px;}
+.opt{
+  display:flex;align-items:center;justify-content:space-between;
+width:100%;text-align:left;background:#f7fafd;border:2px solid #dde6f0;
+border-radius:14px;padding:15px 16px;font-size:15px;font-weight:500;color:var(--ink);
+cursor:pointer;transition:border-color .15s,background .15s,transform .1s;
+font-family:inherit;
+}
+.opt:active{transform:scale(.98);}
+.opt:hover,.opt:focus-visible{border-color:var(--teal);background:#f0faf7;}
+.opt:focus-visible{outline:3px solid #9fdfcd;outline-offset:2px;}
+.opt .arrow{color:#c3cfdd;font-weight:700;}
+.opt.selected{border-color:var(--teal);background:#eafaf4;}
+.opt.selected .check{color:var(--teal);font-weight:900;}
+.opt .check{color:#c3cfdd;font-weight:700;}
+.nextbtn{
+  width:100%;margin-top:14px;background:var(--teal);color:#fff;border:none;border-radius:999px;
+padding:15px;font-size:15.5px;font-weight:700;font-family:inherit;cursor:pointer;
+transition:background .15s,opacity .15s;
+           }
+.nextbtn:hover{background:var(--teal-deep);}
+.nextbtn:disabled{opacity:.4;cursor:not-allowed;}
+.back{margin-top:16px;background:none;border:none;color:var(--soft);font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline;}
+
+.loading{text-align:center;padding:36px 0 28px;}
+.spinner{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;border:6px solid var(--mist);border-top-color:var(--teal);animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-weight:700;color:var(--navy);}
+.loading .steps{font-size:12.5px;color:var(--soft);margin-top:8px;min-height:1.6em;}
+
+.result{text-align:center;}
+.result .rlabel{font-size:13px;font-weight:700;color:var(--soft);letter-spacing:.1em;margin-bottom:10px;}
+.gauge{position:relative;width:200px;height:120px;margin:0 auto 6px;}
+.gauge svg{width:100%;height:auto;overflow:visible;}
+.gauge .gtext{position:absolute;left:0;right:0;bottom:0;font-family:'Zen Maru Gothic',sans-serif;}
+.gauge .glevel{font-size:34px;font-weight:900;color:var(--teal);line-height:1.1;}
+.gauge .gcap{font-size:12px;font-weight:700;color:var(--soft);}
+.rmsg{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:18px;color:var(--navy);margin:14px 0 6px;line-height:1.55;white-space:pre-line;}
+.rnote{font-size:12.5px;color:var(--soft);margin-bottom:18px;}
+.locked{
+  background:linear-gradient(180deg,#f7fafd,#eef4fa);
+    border:1.5px dashed #c8d6e6;border-radius:14px;padding:16px 14px;margin-bottom:18px;text-align:left;
+}
+.locked h3{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.locked ul{list-style:none;}
+.locked li{font-size:13px;color:var(--soft);padding:4px 0;display:flex;gap:8px;align-items:center;}
+.locked li::before{content:"🔒";font-size:12px;}
+.idbox{background:var(--navy);color:#fff;border-radius:14px;padding:14px;margin-bottom:14px;}
+.idbox .idlabel{font-size:11.5px;opacity:.75;letter-spacing:.08em;}
+.idbox .idval{font-family:'Zen Maru Gothic',sans-serif;font-size:26px;font-weight:900;letter-spacing:.18em;margin:2px 0 8px;}
+.copybtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:6px 16px;cursor:pointer;font-family:inherit;}
+.copybtn:active{background:rgba(255,255,255,.28);}
+.linebtn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+width:100%;background:var(--line);color:#fff;border:none;border-radius:999px;
+padding:17px;font-size:16.5px;font-weight:700;font-family:inherit;cursor:pointer;
+box-shadow:0 6px 18px rgba(6,199,85,.35);transition:background .15s,transform .1s;
+text-decoration:none;
+      }
+.linebtn:hover{background:var(--line-deep);}
+.linebtn:active{transform:scale(.98);}
+.linehint{font-size:12px;color:var(--soft);margin-top:10px;}
+
+.trust{margin-top:26px;}
+  .trust h2{font-family:'Zen Maru Gothic',sans-serif;font-size:17px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:14px;}
+.steps3{display:grid;gap:10px;}
+.step3{background:var(--cloud);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:14px;align-items:center;}
+.step3 .n{font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:22px;color:var(--teal);min-width:28px;text-align:center;}
+.step3 .t{font-size:13.5px;font-weight:700;color:var(--navy);}
+.step3 .d{font-size:12px;color:var(--soft);}
+
+footer{margin-top:30px;text-align:center;font-size:10.5px;color:#9aa8bd;line-height:1.9;padding:0 8px;}
+footer a{color:#9aa8bd;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
+.hidden{display:none !important;}
+</style>
+  </head>
+  <body>
+  <div class="wrap">
+
+  <header>
+  <span class="logo-dot"></span>
+  <span class="logo">かんたん返済みらい診断</span>
+  </header>
+
+  <section class="hero" id="hero">
+  <span class="eyebrow">無料・匿名OK・30秒</span>
+  <h1 class="disp">その返済、<br><em>もっとラクにできる</em>かも。</h1>
+  <p>カードローンも、友人や家族からの借金も、<br>起業のお金の悩みもOK。8つの質問で<br>負担を軽くできる可能性をチェックできます。</p>
+  <div class="badges">
+  <span class="badge">✓ 友人・家族からの借金もOK</span>
+  <span class="badge">✓ 個人情報の入力不要</span>
+  <span class="badge">✓ 相談まで完全無料</span>
+  </div>
+  </section>
+
+  <div class="card" id="card">
+
+  <div id="quiz">
+  <div class="progress">
+  <div class="bar"><span id="barfill"></span></div>
+  <span class="pnum" id="pnum">1 / 8</span>
+  </div>
+  <div id="qbody"></div>
+  <button class="back hidden" id="backbtn" type="button">← 前の質問にもどる</button>
+  </div>
+
+  <div id="loading" class="loading hidden">
+  <div class="spinner" aria-hidden="true"></div>
+  <p class="disp">診断中です…</p>
+  <p class="steps" id="loadstep">回答内容を確認しています</p>
+  </div>
+
+  <div id="ngresult" class="result hidden">
+  <p class="rlabel">― 診断結果 ―</p>
+  <p class="rmsg disp" id="ngmsg">いまの状況では、借り入れの見直しによる<br>負担軽減はむずかしい可能性が高いです。</p>
+  <p class="rnote">※ 回答内容にもとづく簡易判定です。状況が変われば結果も変わります。</p>
+  <div class="locked" style="border-style:solid;">
+  <h3>🏛 いまのあなたに合った相談先</h3>
+  <ul style="list-style:none;">
+  <li style="padding:6px 0;font-size:13px;color:var(--ink);"><strong>法テラス</strong>(国の法律相談窓口)<br><span style="color:var(--soft);">借金・滞納の悩みを無料で相談できます … 0570-078374</span></li>
+  <li style="padding:6px 0;font-size:13px;color:var(--ink);"><strong>社会福祉協議会</strong>(お住まいの市区町村)<br><span style="color:var(--soft);">生活福祉資金など公的な支援制度の窓口です</span></li>
+  <li style="padding:6px 0;font-size:13px;color:var(--ink);"><strong>自治体の無料家計相談</strong><br><span style="color:var(--soft);">生活再建の計画づくりをサポートしてくれます</span></li>
+  </ul>
+  </div>
+  <p class="linehint">状況が変わったら、いつでもまた診断してくださいね。</p>
+  </div>
+
+  <div id="result" class="result hidden">
+  <p class="rlabel">― 診断結果 ―</p>
+  <div class="gauge">
+  <svg viewBox="0 0 200 110" aria-hidden="true">
+  <path d="M14 104 A 86 86 0 0 1 186 104" fill="none" stroke="#e6edf5" stroke-width="16" stroke-linecap="round"/>
+  <path id="gaugearc" d="M14 104 A 86 86 0 0 1 186 104" fill="none" stroke="url(#gr)" stroke-width="16" stroke-linecap="round" stroke-dasharray="270" stroke-dashoffset="270"/>
+  <defs>
+  <linearGradient id="gr" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0%" stop-color="#37c39f"/>
+  <stop offset="100%" stop-color="#0e9f7e"/>
+  </linearGradient>
+  </defs>
+  </svg>
+  <div class="gtext">
+  <div class="glevel" id="glevel">高い</div>
+  <div class="gcap">負担を軽くできる可能性</div>
+  </div>
+  </div>
+  <p class="rmsg disp" id="rmsg"></p>
+  <p class="rnote">※ 回答内容にもとづく簡易シミュレーションです。確定的な結果を保証するものではありません。</p>
+
+  <div class="locked">
+  <h3>📋 LINEで受け取れる「詳しい結果」</h3>
+  <ul id="lockedlist">
+  <li>あなたの回答をもとにした詳細レポート</li>
+  </ul>
+  </div>
+
+  <div class="idbox">
+  <div class="idlabel">あなたの診断ID</div>
+  <div class="idval" id="idval">------</div>
+  <button class="copybtn" id="copybtn" type="button">IDをコピーする</button>
+  </div>
+
+  <a class="linebtn" id="linebtn" href="#" target="_blank" rel="noopener">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 5.64 2 10.1c0 3.99 3.54 7.33 8.32 7.97.32.07.77.21.88.49.1.25.07.64.03.9l-.14.86c-.04.25-.2 1 .87.55 1.07-.46 5.78-3.4 7.89-5.83C21.4 13.4 22 11.83 22 10.1 22 5.64 17.52 2 12 2z"/></svg>
+  LINEで詳しい結果を受け取る
+  </a>
+  <p class="linehint">友だち追加後、トークに <strong>診断ID</strong> を送るだけ📩</p>
+  </div>
+  </div>
+
+  <section class="trust">
+  <h2 class="disp">受け取りまでの流れ</h2>
+  <div class="steps3">
+  <div class="step3"><span class="n disp">1</span><div><div class="t">8つの質問にこたえる</div><div class="d">名前や電話番号の入力は不要です</div></div></div>
+  <div class="step3"><span class="n disp">2</span><div><div class="t">LINEで診断IDを送る</div><div class="d">その場で詳しい結果レポートが届きます</div></div></div>
+  <div class="step3"><span class="n disp">3</span><div><div class="t">希望すれば無料相談へ</div><div class="d">家計と返済の専門家に何度でも相談OK</div></div></div>
+  </div>
+  </section>
+
+  <footer>
+  本診断は返済負担の見直しに関する一般的な情報提供を目的としたものであり、法律相談・貸付のあっせん・特定の金融商品の勧誘を行うものではありません。<br>
+  運営:ヒトモノチイキ|<a href="#">プライバシーポリシー</a>
+  </footer>
+  </div>
+
+  <script>
+  /* ================================================================
+  ★★★ ここだけ書き換える ★★★
+  N8N_WEBHOOK_URL : n8nのWebhookノードに出る「Production URL」を貼る
+LINE_ADD_URL : 公式LINEの友だち追加URL
+================================================================ */
+const CONFIG = {
+N8N_WEBHOOK_URL: "https://YOUR-N8N-DOMAIN/webhook/shindan",
+LINE_ADD_URL: "https://lin.ee/no8v6UV",
+};
+
+const QUESTIONS = [
+{ key:"source", title:"借入先はどこ?", sub:"あてはまるものをすべて選んでください(複数選択OK)", type:"multi",
+opts:[["消費者金融・カードローン","consumer"],["クレジットカード・リボ払い","card"],["友人・知人","friend"],["家族・親族","family"],["事業・起業のためのお金","biz"]] },
+{ key:"total", title:"借りているお金の合計は?", sub:"すべての借入先をあわせて、だいたいでOK",
+  opts:[["50万円未満",1],["50〜150万円",2],["150〜300万円",3],["300万円以上",4]] },
+{ key:"income", title:"あなたの現在の年収は?", sub:"税込・だいたいでOK",
+  opts:[["200万円未満",1],["200〜300万円",2],["300〜400万円",3],["400〜600万円",4],["600万円以上",5],["現在、収入がない",0,"NG"]] },
+{ key:"job", title:"いまの働き方は?", sub:"収入の安定性を確認します",
+  opts:[["正社員・公務員",1],["契約・派遣・パート・アルバイト",2],["自営業・フリーランス",3],["無職・休職中",4,"NG"]] },
+{ key:"count", title:"借入先はいくつある?", sub:"会社・人をあわせた数で",
+  opts:[["1つ",1],["2つ",2],["3つ",3],["4つ以上",4]] },
+{ key:"status", title:"いまの返済状況は?", sub:"正直にお答えいただくほど診断精度が上がります",
+  opts:[["問題なく返せている",1],["ときどき厳しい月がある",2],["少し遅れることがある(2ヶ月未満)",3],["2ヶ月以上の遅れ・滞納がある",4,"NG"]] },
+{ key:"credit", title:"過去5年以内に、次の経験は?", sub:"債務整理(任意整理・自己破産など)や、2ヶ月以上の長期延滞",
+  opts:[["どちらもない",1],["わからない",2],["ある",4,"NG"]] },
+{ key:"age", title:"あなたの年代は?", sub:"最後の質問です!",
+  opts:[["20歳未満",0,"NG"],["20代",1],["30代",2],["40代",3],["50代以上",4]] },
+  ];
+
+const TOTAL_MIN = {1:0, 2:50, 3:150, 4:300};
+const INCOME_MAX = {1:200, 2:300, 3:400, 4:600, 5:900};
+
+const SEGMENT_PRIORITY = ["consumer","card","biz","friend","family"];
+
+const SEGMENTS = {
+consumer:{ tagline:"金利のかかる借入は、組み方しだいで負担が変わります。",
+locked:["毎月の返済額を軽くする具体的な選択肢","おまとめ・借り換えの向き不向きチェック","家計と返済の専門家への無料相談(希望者のみ)"] },
+card:{ tagline:"リボ払いは仕組みを知るだけで止め方が見えてきます。",
+locked:["リボの負担を止めるための考え方と手順","返す順番の正しい優先順位のつけ方","家計と返済の専門家への無料相談(希望者のみ)"] },
+friend:{ tagline:"友人からの借金は、お金と同じくらい関係も大切。",
+locked:["関係を壊さずに返しきる返済計画の立て方","気まずくならない伝え方・約束の仕方","返済資金をつくる家計見直し(専門家無料相談)"] },
+family:{ tagline:"家族からの借金こそ、きちんと整理すると安心です。",
+locked:["家族間の借金を整理する返済計画のつくり方","贈与・税金まわりで損しないための注意点","家計と返済の専門家への無料相談(希望者のみ)"] },
+biz:{ tagline:"事業のお金は、個人の借金とは打ち手が違います。",
+locked:["公的融資・補助金など資金調達の選択肢","事業と生活のお金を分ける資金繰りの整理法","起業のお金に強い専門家への無料相談(希望者のみ)"] },
+};
+
+let idx = 0;
+const answers = {};
+const answerLabels = {};
+let ngReasons = [];
+const diagId = genId();
+
+function genId(){
+const c = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+let s = "";
+for(let i=0;i<6;i++) s += c[Math.floor(Math.random()*c.length)];
+return s;
+}
+
+const qbody = document.getElementById("qbody");
+const barfill = document.getElementById("barfill");
+const pnum = document.getElementById("pnum");
+const backbtn = document.getElementById("backbtn");
+
+function render(){
+const q = QUESTIONS[idx];
+pnum.textContent = (idx+1) + " / " + QUESTIONS.length;
+barfill.style.width = ((idx)/QUESTIONS.length*100) + "%";
+backbtn.classList.toggle("hidden", idx===0);
+
+if(q.type === "multi"){
+const selected = new Set(Array.isArray(answers[q.key]) ? answers[q.key] : []);
+qbody.innerHTML =
+'<p class="qtitle disp">Q' + (idx+1) + '. ' + q.title + '</p>' +
+'<p class="qsub">' + q.sub + '</p>' +
+'<div class="opts">' +
+q.opts.map(function(o,i){
+const on = selected.has(o[1]);
+return '<button type="button" class="opt'+(on?' selected':'')+'" data-i="'+i+'">' +
+'<span>'+o[0]+'</span><span class="check">'+(on?'✓':'+')+'</span></button>';
+}).join("") + '</div>' +
+'<button type="button" class="nextbtn" id="nextbtn"'+(selected.size?'':' disabled')+'>次へ進む</button>';
+
+qbody.querySelectorAll(".opt").forEach(function(btn){
+btn.addEventListener("click", function(){
+const tag = q.opts[+btn.dataset.i][1];
+if(selected.has(tag)){ selected.delete(tag); } else { selected.add(tag); }
+btn.classList.toggle("selected");
+btn.querySelector(".check").textContent = selected.has(tag) ? "✓" : "+";
+document.getElementById("nextbtn").disabled = selected.size === 0;
+});
+});
+document.getElementById("nextbtn").addEventListener("click", function(){
+if(selected.size === 0) return;
+answers[q.key] = Array.from(selected);
+answerLabels[q.key] = q.opts.filter(function(o){ return selected.has(o[1]); })
+.map(function(o){ return o[0]; }).join("、");
+idx++;
+if(idx < QUESTIONS.length){ render(); } else { showLoading(); }
+});
+return;
+}
+
+qbody.innerHTML =
+'<p class="qtitle disp">Q' + (idx+1) + '. ' + q.title + '</p>' +
+'<p class="qsub">' + q.sub + '</p>' +
+'<div class="opts">' +
+q.opts.map(function(o,i){
+return '<button type="button" class="opt" data-i="'+i+'">' +
+'<span>'+o[0]+'</span><span class="arrow">›</span></button>';
+}).join("") + '</div>';
+
+qbody.querySelectorAll(".opt").forEach(function(btn){
+btn.addEventListener("click", function(){
+const i = +btn.dataset.i;
+answers[q.key] = q.opts[i][1];
+answerLabels[q.key] = q.opts[i][0];
+if(q.opts[i][2] === "NG"){ ngReasons.push(q.key); }
+idx++;
+if(idx < QUESTIONS.length){ render(); }
+else { showLoading(); }
+});
+});
+}
+
+backbtn.addEventListener("click", function(){
+if(idx>0){
+idx--;
+ngReasons = [];
+QUESTIONS.slice(0, idx).forEach(function(q){
+const label = answerLabels[q.key];
+const opt = q.opts.find(function(o){ return o[0] === label; });
+if(opt && opt[2] === "NG") ngReasons.push(q.key);
+});
+render();
+}
+});
+
+function showLoading(){
+document.getElementById("quiz").classList.add("hidden");
+const loading = document.getElementById("loading");
+loading.classList.remove("hidden");
+const msgs = ["回答内容を確認しています","返済バランスを計算しています","診断レポートを作成しています"];
+let m = 0;
+const el = document.getElementById("loadstep");
+const timer = setInterval(function(){
+  m++;
+if(m < msgs.length){ el.textContent = msgs[m]; }
+}, 800);
+setTimeout(function(){
+clearInterval(timer);
+loading.classList.add("hidden");
+if(checkQualify()){ showResult(); } else { showNG(); }
+}, 2500);
+}
+
+function score(){
+const s = answers.total*1.3 + answers.count*1.0 + answers.status*1.7;
+if(s >= 11) return {level:"高い", pct:0.88, msg:"あなたの返済負担は、見直しで\n大きく軽くできる可能性があります。"};
+if(s >= 7.5) return {level:"あり", pct:0.62, msg:"返済プランの見直しで、いまの負担を\n軽くできる可能性が見つかりました。"};
+return {level:"低〜中", pct:0.38, msg:"現状は大きな問題は見られませんが、\nより無理のないプランの余地があります。"};
+}
+
+function checkQualify(){
+const src = Array.isArray(answers.source) ? answers.source : [answers.source];
+const hasKashikin = src.indexOf("consumer") !== -1 || src.indexOf("card") !== -1;
+if(hasKashikin && answers.income > 0){
+const limit = INCOME_MAX[answers.income] / 3;
+if(TOTAL_MIN[answers.total] > limit){ ngReasons.push("souryou"); }
+}
+return ngReasons.length === 0;
+}
+
+function showResult(){
+const r = score();
+const src = Array.isArray(answers.source) ? answers.source : [answers.source];
+const primary = SEGMENT_PRIORITY.find(function(t){ return src.indexOf(t) !== -1; });
+const seg = SEGMENTS[primary] || SEGMENTS.consumer;
+document.getElementById("result").classList.remove("hidden");
+document.getElementById("glevel").textContent = r.level;
+document.getElementById("rmsg").textContent = r.msg + "\n" + seg.tagline;
+document.getElementById("idval").textContent = diagId;
+document.getElementById("lockedlist").innerHTML =
+seg.locked.map(function(t){ return "<li>"+t+"</li>"; }).join("");
+
+requestAnimationFrame(function(){
+const arc = document.getElementById("gaugearc");
+arc.style.transition = "stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)";
+arc.style.strokeDashoffset = 270 * (1 - r.pct);
+});
+
+document.getElementById("linebtn").href = CONFIG.LINE_ADD_URL;
+
+sendToWebhook(r);
+window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function showNG(){
+document.getElementById("ngresult").classList.remove("hidden");
+sendToWebhook({level:"NG"});
+window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function sendToWebhook(r){
+try{
+fetch(CONFIG.N8N_WEBHOOK_URL, {
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({
+diagId: diagId,
+answers: answers,
+labels: answerLabels,
+resultLevel: r.level,
+qualified: ngReasons.length === 0,
+ngReasons: ngReasons,
+ts: new Date().toISOString(),
+ua: navigator.userAgent,
+ref: document.referrer || null
+})
+});
+}catch(e){ }
+}
+
+document.getElementById("copybtn").addEventListener("click", function(){
+const btn = this;
+navigator.clipboard.writeText(diagId).then(function(){
+btn.textContent = "コピーしました ✓";
+setTimeout(function(){ btn.textContent = "IDをコピーする"; }, 1800);
+});
+});
+
+render();
+</script>
+</body>
+</html>

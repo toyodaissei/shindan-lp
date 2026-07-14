@@ -1,0 +1,84 @@
+{
+  "name": "返済診断 スプレッドシート保管",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shindan",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "shindan-webhook"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {"id":"1","name":"diagId","value":"={{ $json.body.diagId }}","type":"string"},
+            {"id":"2","name":"ts","value":"={{ $json.body.ts }}","type":"string"},
+            {"id":"3","name":"resultLevel","value":"={{ $json.body.resultLevel }}","type":"string"},
+            {"id":"4","name":"qualified","value":"={{ $json.body.qualified }}","type":"boolean"},
+            {"id":"5","name":"ngReasons","value":"={{ Array.isArray($json.body.ngReasons) ? $json.body.ngReasons.join(', ') : $json.body.ngReasons }}","type":"string"},
+            {"id":"6","name":"借入先","value":"={{ $json.body.labels.source }}","type":"string"},
+            {"id":"7","name":"借入総額","value":"={{ $json.body.labels.total }}","type":"string"},
+            {"id":"8","name":"年収","value":"={{ $json.body.labels.income }}","type":"string"},
+            {"id":"9","name":"働き方","value":"={{ $json.body.labels.job }}","type":"string"},
+            {"id":"10","name":"借入先数","value":"={{ $json.body.labels.count }}","type":"string"},
+            {"id":"11","name":"返済状況","value":"={{ $json.body.labels.status }}","type":"string"},
+            {"id":"12","name":"債務整理歴","value":"={{ $json.body.labels.credit }}","type":"string"},
+            {"id":"13","name":"年代","value":"={{ $json.body.labels.age }}","type":"string"},
+            {"id":"14","name":"ua","value":"={{ $json.body.ua }}","type":"string"},
+            {"id":"15","name":"ref","value":"={{ $json.body.ref }}","type":"string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-node",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    },
+
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "11Ck3iZoYw6mXZV5G2QI6kXBeIx5UcDGDCwz37VD1ZV0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "sheets-node",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Set", "type": "main", "index": 0}]]
+    },
+    "Set": {
+      "main": [[{"node": "Google Sheets", "type": "main", "index": 0}]]
+    }
+  }
+}

@@ -169,6 +169,80 @@ function proposeForPending() {
   }
 }
 
+/**
+ * 提案JSONの必須構造をスキーマで強制（Geminiが変数一覧やtalkScriptを落とさないように）
+ */
+var DM_PROPOSAL_SCHEMA = {
+  type: 'object',
+  properties: {
+    variables: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: { key: { type: 'string' }, desc: { type: 'string' }, example: { type: 'string' } },
+        required: ['key', 'desc']
+      }
+    },
+    manual: {
+      type: 'object',
+      properties: {
+        goal: { type: 'string' },
+        steps: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              no: { type: 'integer' }, action: { type: 'string' }, channel: { type: 'string' },
+              script: { type: 'string' }, timing: { type: 'string' }, point: { type: 'string' }
+            },
+            required: ['no', 'action', 'channel', 'script', 'timing', 'point']
+          }
+        },
+        talkScript: {
+          type: 'object',
+          properties: {
+            opening: { type: 'string' },
+            hearing: { type: 'array', items: { type: 'string' } },
+            proposal: { type: 'string' },
+            objection: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: { 'if': { type: 'string' }, say: { type: 'string' } },
+                required: ['if', 'say']
+              }
+            },
+            closing: { type: 'string' }
+          },
+          required: ['opening', 'hearing', 'proposal', 'objection', 'closing']
+        },
+        ng: { type: 'array', items: { type: 'string' } }
+      },
+      required: ['goal', 'steps', 'talkScript', 'ng']
+    },
+    ideas: {
+      type: 'object',
+      properties: {
+        angles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' }, why: { type: 'string' }, 'try': { type: 'string' },
+              expReplyRate: { type: 'string' }, expMeetingRate: { type: 'string' },
+              expPartnerRate: { type: 'string' }, basis: { type: 'string' }
+            },
+            required: ['title', 'why', 'try', 'expReplyRate', 'expMeetingRate', 'expPartnerRate', 'basis']
+          }
+        },
+        experiments: { type: 'array', items: { type: 'string' } }
+      },
+      required: ['angles', 'experiments']
+    }
+  },
+  required: ['variables', 'manual', 'ideas']
+};
+
 /** 1案件について、過去の高成績パターンを踏まえ「2つの型」で提案 → Docに書き出す */
 function proposeDmStrategy_(caseRow) {
   var bestPatterns = collectBestPatterns_();
@@ -209,7 +283,16 @@ function proposeDmStrategy_(caseRow) {
     '・"talkScript" は面談/通話でそのまま読めるレベルで具体的に。\n' +
     '・"ideas" は必ず 想定返信率・面談化率・提携率 の3数値を添え、さらにアイデアが広がる“きっかけ”にする。';
 
-  var o = callGeminiJson_(prompt, { temperature: 0.6, maxTokens: 8192 });
+  var o = callGeminiJson_(prompt, { temperature: 0.6, maxTokens: 8192, schema: DM_PROPOSAL_SCHEMA });
+
+  // 保険：必須ブロックが欠けたら一度だけ強めに再生成
+  if (!o || !o.variables || !o.manual || !o.manual.talkScript || !o.ideas) {
+    o = callGeminiJson_(prompt +
+      '\n\n【厳守】前回 variables / manual.talkScript / ideas のいずれかが欠落しました。' +
+      '3ブロックすべてを必ず埋めて返してください。',
+      { temperature: 0.5, maxTokens: 8192, schema: DM_PROPOSAL_SCHEMA });
+  }
+
   return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1], caseRow[DM_COL.PLATFORM - 1], o);
 }
 

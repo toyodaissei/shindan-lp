@@ -25,6 +25,11 @@ function callGemini_(prompt, opts) {
   if (opts.json) {
     payload.generationConfig.responseMimeType = 'application/json';
   }
+  // 構造化出力：必須フィールドをスキーマで強制（Geminiが要素を落とすのを防ぐ）
+  if (opts.schema) {
+    payload.generationConfig.responseMimeType = 'application/json';
+    payload.generationConfig.responseSchema = opts.schema;
+  }
   applyThinkingConfig_(payload.generationConfig);
   if (opts.system) {
     payload.systemInstruction = { parts: [{ text: opts.system }] };

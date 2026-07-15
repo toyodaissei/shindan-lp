@@ -83,25 +83,25 @@ function demoDealProposal() {
   return out;
 }
 
-/** ④ 🆕 録画なし(テキスト)でDM「2つの型」提案を生成 */
+/** ④ 🆕 録画なし(テキスト)でDM「2つの型」提案を生成（エージェント開拓シーン） */
 function demoDmProposal() {
   // 本来は Gemini が録画から作る解析結果を、ここでは手打ちで用意
   var fakeAnalysis = {
-    customer: '(TEST) 美容サロン D様',
-    product: '集客支援コンサル',
-    platform: 'Instagram',
-    summary: '(TEST) InstagramのDMで美容サロンオーナーに集客支援を提案。定型の営業文から入り、' +
-      '実績を提示したが返信は一往復で止まった。',
-    technique: '冒頭で共感→実績提示→無料相談の提案、という王道の型。ただし相手の投稿に触れず一般的。',
-    reaction: '既読はつくが温度感は低め。1返信で停滞。',
+    customer: '(TEST) 就活系インフルエンサー E様',
+    product: '27卒面談送客案件',
+    platform: 'InstagramDM',
+    summary: '(TEST) 就活系の発信をしているインフルエンサーに、27卒学生の面談送客案件を' +
+      'エージェントとして一緒にやりませんかとDMで打診。案件概要は伝えたが、報酬条件が曖昧で返信が停滞。',
+    technique: '冒頭で発信への共感→案件概要の提示→「一緒にやりませんか」の打診、という型。ただし報酬・稼働イメージが不明瞭。',
+    reaction: '既読はつき1返信あるが、条件面が見えず様子見。',
     outcome: '返信',
-    sent: 12, replies: 4,
-    good: '実績の数字提示で一部返信を得られた点。',
-    bad: '相手の投稿・状況に触れないため“自分ごと化”されず停滞。CTAが弱い。',
+    sent: 15, replies: 5,
+    good: '相手の発信内容に触れて入った点は好反応。',
+    bad: '報酬(送客単価)や稼働負荷、実績が曖昧で“自分がやる理由”が弱い。面談への導線が無い。',
     messages: [
-      { step: 1, message: 'はじめまして!投稿拝見しました。集客のお手伝いをしています。', intent: '接触・自己紹介', reaction: '既読', effect: '普' },
-      { step: 2, message: '同業のサロン様で3ヶ月で予約数1.8倍の実績があります。', intent: '実績提示', reaction: '返信あり', effect: '良' },
-      { step: 3, message: 'よければ無料相談どうですか?', intent: 'CTA', reaction: '停滞', effect: '悪' }
+      { step: 1, message: 'はじめまして!27卒向けの発信いつも拝見してます。実は学生の面談送客の案件をご一緒できないかと思いご連絡しました。', intent: '共感+用件提示', reaction: '既読→返信', effect: '良' },
+      { step: 2, message: '面談1件あたり〇〇円で、審査もこちらで巻き取ります。', intent: '条件提示', reaction: '様子見', effect: '普' },
+      { step: 3, message: 'よければ詳細お送りしますね!', intent: 'CTA', reaction: '停滞', effect: '悪' }
     ]
   };
 

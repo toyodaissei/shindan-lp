@@ -30,9 +30,9 @@ var DM_COL = {
   SENT: 12, REPLIES: 13, APPTS: 14, DEALS: 15, REPLY_RATE: 16, CONV_RATE: 17,
   GOOD: 18, BAD: 19, PROPOSAL_URL: 20, STATUS: 21, PROCESSED_AT: 22
 };
-var DM_HEADERS = ['id', '日時', 'ファイルID', 'ファイル名', '顧客/案件', '商材', 'プラットフォーム',
-  '録画の要約', '使った営業手法', '顧客の反応', '結果(未返信/返信/アポ/成約)',
-  '送信数', '返信数', 'アポ数', '成約数', '返信率', '転換率',
+var DM_HEADERS = ['id', '日時', 'ファイルID', 'ファイル名', '相手(エージェント)/案件', '案件/商材', 'チャネル',
+  '録画の要約', '使った営業手法', '相手の反応', '結果(未返信/返信/面談/提携)',
+  '送信数', '返信数', '面談数', '提携数', '返信率', '提携率',
   '良かった点', '改善点', '提案書URL', 'ステータス', '処理日時'];
 
 var DM_MSG_COL = { ID: 1, CASE_ID: 2, CUSTOMER: 3, PLATFORM: 4, STEP: 5, MESSAGE: 6, INTENT: 7, REACTION: 8, EFFECT: 9 };
@@ -76,23 +76,24 @@ function ingestDmRecordings() {
   Logger.log('ingestDmRecordings: ' + processed + '件の録画を解析');
 }
 
-/** Geminiに画面録画を“視聴”させDM営業を構造化 */
+/** Geminiに画面録画を“視聴”させDM営業(エージェント開拓)を構造化 */
 function analyzeDmRecording_(file) {
   var prompt =
-    'これは営業担当者がSNSのDMで顧客に営業している「画面録画」です。画面に映るチャット/DMのやり取りを読み取り、' +
-    '営業手法を分析してください。必ず次のJSONのみ返す:\n' +
+    'これは「代理店/エージェント開拓」の営業担当者が、SNSのDM等で相手(集客・送客してくれるエージェント候補)に' +
+    '案件を持ちかけている「画面録画」です。画面に映るチャット/DMのやり取りを読み取り、営業手法を分析してください。' +
+    '必ず次のJSONのみ返す:\n' +
     '{' +
-    '"customer":"顧客/案件名（分かれば。無ければ推定や空文字）",' +
-    '"product":"売っている商材",' +
-    '"platform":"プラットフォーム(Instagram/X/LINE/Facebook/その他)",' +
+    '"customer":"相手(エージェント)名/案件名（分かれば。無ければ推定や空文字）",' +
+    '"product":"持ちかけている案件/商材(例:27卒面談送客案件 など)",' +
+    '"platform":"チャネル(Instagram/InstagramDM/Threads/ThreadsDM/X/LINE/公式LINE/Facebook/その他)",' +
     '"summary":"録画で何が行われたかの要約(4〜6行)",' +
     '"technique":"使われた営業手法・トークの型(改行区切りで具体的に)",' +
-    '"reaction":"顧客の反応・温度感",' +
-    '"outcome":"未返信 / 返信 / アポ / 成約 のいずれか(判断できなければ最も近いもの)",' +
-    '"sent":送ったメッセージ数(整数),"replies":顧客の返信数(整数),' +
+    '"reaction":"相手の反応・温度感",' +
+    '"outcome":"未返信 / 返信 / 面談 / 提携 のいずれか(判断できなければ最も近いもの。提携=成約)",' +
+    '"sent":送ったメッセージ数(整数),"replies":相手の返信数(整数),' +
     '"good":"良かった点(なぜ効いたか)",' +
-    '"bad":"改善点(もっとこうすれば返信/転換が上がる)",' +
-    '"messages":[{"step":1,"message":"実際に送った文面(できるだけ原文)","intent":"その一手の狙い/技術","reaction":"顧客の反応","effect":"良/普/悪"}]' +
+    '"bad":"改善点(もっとこうすれば返信/面談/提携が増えるか)",' +
+    '"messages":[{"step":1,"message":"実際に送った文面(できるだけ原文)","intent":"その一手の狙い/技術","reaction":"相手の反応","effect":"良/普/悪"}]' +
     '}\n' +
     '文面は新人が真似できるよう、できるだけ原文に近い形で書き出すこと。';
   return analyzeVideo_(file.getBlob(), prompt, { json: true, maxTokens: 8192 });
@@ -102,7 +103,7 @@ function writeDmCase_(sh, file, a) {
   var id = newId_('dm');
   var sent = Number(a.sent) || 0;
   var replies = Number(a.replies) || 0;
-  var deals = (a.outcome === '成約') ? 1 : 0;
+  var deals = (a.outcome === '提携' || a.outcome === '成約') ? 1 : 0;
   var row = [];
   row[DM_COL.ID - 1] = id;
   row[DM_COL.TS - 1] = Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm');
@@ -117,7 +118,7 @@ function writeDmCase_(sh, file, a) {
   row[DM_COL.OUTCOME - 1] = a.outcome || '';
   row[DM_COL.SENT - 1] = sent;
   row[DM_COL.REPLIES - 1] = replies;
-  row[DM_COL.APPTS - 1] = (a.outcome === 'アポ' || a.outcome === '成約') ? 1 : 0;
+  row[DM_COL.APPTS - 1] = (a.outcome === '面談' || a.outcome === 'アポ' || a.outcome === '提携' || a.outcome === '成約') ? 1 : 0;
   row[DM_COL.DEALS - 1] = deals;
   row[DM_COL.REPLY_RATE - 1] = sent ? Math.round(replies / sent * 100) + '%' : '';
   row[DM_COL.CONV_RATE - 1] = sent ? Math.round(deals / sent * 100) + '%' : '';
@@ -173,58 +174,81 @@ function proposeDmStrategy_(caseRow) {
   var bestPatterns = collectBestPatterns_();
 
   var prompt =
-    'あなたはトップセールス兼DM営業のコーチです。以下「対象案件」に対して、営業DMの最適解を提案します。\n' +
-    '過去の実績データ（効果が良かった文面・手法）も学習材料として踏まえてください。\n\n' +
+    'あなたは「代理店/エージェント開拓」に強いトップセールス兼営業コーチです。\n' +
+    '私たちは広告主と代理店の間に立つ代理店で、広告主から受けた案件(例:27卒面談送客案件)を、\n' +
+    'SNSのDM等でエージェント(集客・送客してくれる個人/法人パートナー)に持ちかけ、提携してもらうのが営業です。\n' +
+    '目的は「エージェント開拓の営業ナレッジを再現性ある形にし、新人でも回せるトークスクリプト/DMを提示する」こと。\n' +
+    '以下の対象案件に対する最適解を、過去の高成績パターンも学習材料に作ってください。\n\n' +
     '=== 対象案件 ===\n' +
-    '顧客/案件: ' + caseRow[DM_COL.CUSTOMER - 1] + '\n' +
-    '商材: ' + caseRow[DM_COL.PRODUCT - 1] + '\n' +
-    'プラットフォーム: ' + caseRow[DM_COL.PLATFORM - 1] + '\n' +
+    '相手(エージェント)/案件: ' + caseRow[DM_COL.CUSTOMER - 1] + '\n' +
+    '案件/商材: ' + caseRow[DM_COL.PRODUCT - 1] + '\n' +
+    '主なチャネル: ' + caseRow[DM_COL.PLATFORM - 1] +
+      '（想定チャネル: Instagram/InstagramDM/Threads/ThreadsDM/X/LINE/公式LINE/Facebook）\n' +
     '現状の要約: ' + caseRow[DM_COL.SUMMARY - 1] + '\n' +
     '使った手法: ' + caseRow[DM_COL.TECHNIQUE - 1] + '\n' +
-    '顧客反応: ' + caseRow[DM_COL.REACTION - 1] + ' / 結果: ' + caseRow[DM_COL.OUTCOME - 1] + '\n' +
+    '相手の反応: ' + caseRow[DM_COL.REACTION - 1] + ' / 結果: ' + caseRow[DM_COL.OUTCOME - 1] + '\n' +
     '改善点メモ: ' + caseRow[DM_COL.BAD - 1] + '\n\n' +
     '=== 過去の高成績パターン(学習データ) ===\n' + bestPatterns + '\n\n' +
     '必ず次のJSONのみ返す:\n' +
     '{' +
+    '"variables":[{"key":"{{相手の名前}}","desc":"何を入れるか","example":"例"}],' +
     '"manual":{' +
-      '"goal":"このマニュアルで到達するゴール",' +
-      '"steps":[{"no":1,"action":"やること(新人が迷わない粒度で)","script":"そのままコピペで送れる文面例","timing":"送るタイミング/条件","point":"つまづきポイント/注意"}],' +
+      '"goal":"このマニュアルで到達するゴール(例:面談アポ獲得)",' +
+      '"steps":[{"no":1,"action":"やること(新人が迷わない粒度)","channel":"どのチャネルで送るか","script":"そのままコピペで送れる文面。差し込み変数は必ず {{変数名}} 形式で埋め込む","timing":"送るタイミング/条件","point":"つまづき注意"}],' +
+      '"talkScript":{"opening":"面談/通話の掴み(変数可)","hearing":["ヒアリングで聞く質問"],"proposal":"案件の提案トーク","objection":[{"if":"よくある断り/懸念","say":"切り返しトーク"}],"closing":"クロージング(次アクション確定)"},' +
       '"ng":["やってはいけないこと"]' +
     '},' +
     '"ideas":{' +
-      '"angles":[{"title":"切り口/アイデア名","why":"なぜ効くかの仮説","try":"具体的な試し方","expReplyRate":"想定返信率(例: 25〜35%)","expConvRate":"想定転換率(例: 5〜8%)","basis":"その数値の根拠(過去データや一般値)"}],' +
+      '"angles":[{"title":"切り口/アイデア名","why":"なぜ効くかの仮説","try":"具体的な試し方","expReplyRate":"想定返信率(例:25〜35%)","expMeetingRate":"想定 面談化率(例:8〜12%)","expPartnerRate":"想定 提携(成約)率(例:3〜5%)","basis":"その数値の根拠(過去データや一般値)"}],' +
       '"experiments":["A/Bで試すべき比較案(数値で検証できる形)"]' +
     '}' +
     '}\n' +
-    '「manual」は新人が1→10まで真似すれば再現できるレベルで具体的に。stepは6〜10個。\n' +
-    '「ideas」はそこからさらにアイデアが広がる“きっかけ”になるように、必ず想定返信率・想定転換率の数値を添える。';
+    '重要:\n' +
+    '・文面テンプレは必ず {{変数名}} の差し込み形式にし、使った変数は "variables" に列挙する。\n' +
+    '・steps は各チャネル特性(Instagram/ThreadsのDMは短く軽快、公式LINEは段階的、Xは簡潔、Facebookはやや丁寧)を踏まえ、6〜10個。\n' +
+    '・"talkScript" は面談/通話でそのまま読めるレベルで具体的に。\n' +
+    '・"ideas" は必ず 想定返信率・面談化率・提携率 の3数値を添え、さらにアイデアが広がる“きっかけ”にする。';
 
   var o = callGeminiJson_(prompt, { temperature: 0.6, maxTokens: 8192 });
-  return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1], o);
+  return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1], caseRow[DM_COL.PLATFORM - 1], o);
 }
 
 /** 提案JSON → 見やすいGoogle Docに整形して書き出し、URLを返す */
-function writeDmProposalDoc_(customer, product, o) {
+function writeDmProposalDoc_(customer, product, platform, o) {
   var folderId = prop_('PROPOSAL_FOLDER', false);
-  var name = 'DM提案_' + (customer || '案件') + '_' +
+  var name = 'エージェント開拓提案_' + (customer || '案件') + '_' +
     Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyyMMdd-HHmm');
   var doc = DocumentApp.create(name);
   var b = doc.getBody();
 
-  b.appendParagraph('営業DM 最適解 提案書').setHeading(DocumentApp.ParagraphHeading.TITLE);
-  b.appendParagraph('対象: ' + (customer || '') + '　/　商材: ' + (product || ''));
+  b.appendParagraph('エージェント開拓 最適解 提案書').setHeading(DocumentApp.ParagraphHeading.TITLE);
+  b.appendParagraph('相手/案件: ' + (customer || '') + '　/　案件・商材: ' + (product || '') +
+    '　/　主なチャネル: ' + (platform || ''));
   b.appendHorizontalRule();
 
+  // 差し込み変数一覧（新人がまず埋めるもの）
+  if (o.variables && o.variables.length) {
+    b.appendParagraph('◇ 差し込み変数一覧（送信前にここを埋める）')
+      .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    o.variables.forEach(function (v) {
+      b.appendListItem((v.key || '') + ' … ' + (v.desc || '') +
+        (v.example ? '（例: ' + v.example + '）' : ''));
+    });
+  }
+
   // ① マニュアル型
-  b.appendParagraph('① マニュアル型（新人がそのまま真似できる手順書）')
+  b.appendParagraph('① マニュアル型（新人が1→10でそのまま真似できる手順書）')
     .setHeading(DocumentApp.ParagraphHeading.HEADING1);
   var m = o.manual || {};
-  if (m.goal) b.appendParagraph('ゴール：' + m.goal);
+  if (m.goal) b.appendParagraph('ゴール：' + m.goal).editAsText().setBold(true);
+
+  b.appendParagraph('― DM手順（チャネル別・コピペ文面）―').setHeading(DocumentApp.ParagraphHeading.HEADING2);
   (m.steps || []).forEach(function (s) {
-    b.appendParagraph('STEP ' + (s.no || '') + '：' + (s.action || ''))
-      .setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    var head = 'STEP ' + (s.no || '') + '：' + (s.action || '');
+    if (s.channel) head += '　【' + s.channel + '】';
+    b.appendParagraph(head).setHeading(DocumentApp.ParagraphHeading.HEADING3);
     if (s.script) {
-      b.appendParagraph('▼ そのまま送れる文面');
+      b.appendParagraph('▼ そのまま送れる文面（{{ }}を差し替え）');
       var q = b.appendParagraph(s.script);
       q.setIndentStart(18);
       q.editAsText().setItalic(true);
@@ -232,6 +256,24 @@ function writeDmProposalDoc_(customer, product, o) {
     if (s.timing) b.appendParagraph('タイミング：' + s.timing);
     if (s.point)  b.appendParagraph('注意：' + s.point);
   });
+
+  // 会話トークスクリプト（面談/通話用）
+  var t = m.talkScript;
+  if (t) {
+    b.appendParagraph('― 面談/通話トークスクリプト ―').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    if (t.opening) b.appendParagraph('■ 掴み：' + t.opening);
+    if (t.hearing && t.hearing.length) {
+      b.appendParagraph('■ ヒアリング');
+      t.hearing.forEach(function (x) { b.appendListItem(x); });
+    }
+    if (t.proposal) b.appendParagraph('■ 提案：' + t.proposal);
+    if (t.objection && t.objection.length) {
+      b.appendParagraph('■ 反論処理');
+      t.objection.forEach(function (x) { b.appendListItem('「' + (x.if || '') + '」→ ' + (x.say || '')); });
+    }
+    if (t.closing) b.appendParagraph('■ クロージング：' + t.closing);
+  }
+
   if (m.ng && m.ng.length) {
     b.appendParagraph('やってはいけないこと').setHeading(DocumentApp.ParagraphHeading.HEADING2);
     m.ng.forEach(function (x) { b.appendListItem('× ' + x); });
@@ -245,7 +287,9 @@ function writeDmProposalDoc_(customer, product, o) {
     b.appendParagraph('◆ ' + (a.title || '')).setHeading(DocumentApp.ParagraphHeading.HEADING2);
     if (a.why)  b.appendParagraph('なぜ効く：' + a.why);
     if (a.try)  b.appendParagraph('試し方：' + a.try);
-    b.appendParagraph('想定 返信率：' + (a.expReplyRate || '-') + '　/　想定 転換率：' + (a.expConvRate || '-'))
+    b.appendParagraph('想定 返信率：' + (a.expReplyRate || '-') +
+      '　/　面談化率：' + (a.expMeetingRate || '-') +
+      '　/　提携(成約)率：' + (a.expPartnerRate || '-'))
       .editAsText().setBold(true);
     if (a.basis) b.appendParagraph('根拠：' + a.basis);
   });

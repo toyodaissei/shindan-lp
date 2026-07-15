@@ -115,7 +115,7 @@ function buildSlides_(customer, content) {
   // 表紙
   var cover = slides[0];
   cover.getPlaceholders().forEach(function (ph) {
-    var t = ph.getPlaceholderType();
+    var t = ph.asShape().getPlaceholderType();
     if (t === SlidesApp.PlaceholderType.CENTERED_TITLE || t === SlidesApp.PlaceholderType.TITLE) {
       ph.asShape().getText().setText(content.title || (customer + ' 様 ご提案'));
     } else if (t === SlidesApp.PlaceholderType.SUBTITLE) {
@@ -128,7 +128,7 @@ function buildSlides_(customer, content) {
     var slide = pres.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
     var phs = slide.getPlaceholders();
     phs.forEach(function (ph) {
-      var t = ph.getPlaceholderType();
+      var t = ph.asShape().getPlaceholderType();
       if (t === SlidesApp.PlaceholderType.TITLE) {
         ph.asShape().getText().setText(s.heading || '');
       } else if (t === SlidesApp.PlaceholderType.BODY) {

@@ -25,6 +25,7 @@ function callGemini_(prompt, opts) {
   if (opts.json) {
     payload.generationConfig.responseMimeType = 'application/json';
   }
+  applyThinkingConfig_(payload.generationConfig);
   if (opts.system) {
     payload.systemInstruction = { parts: [{ text: opts.system }] };
   }
@@ -137,6 +138,7 @@ function analyzeVideo_(blob, prompt, opts) {
     }
   };
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
+  applyThinkingConfig_(payload.generationConfig);
 
   var genRes = UrlFetchApp.fetch(base + '/v1beta/models/' + model + ':generateContent?key=' + key, {
     method: 'post',
@@ -154,6 +156,17 @@ function analyzeVideo_(blob, prompt, opts) {
     catch (e) { var m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw e; }
   }
   return text;
+}
+
+/**
+ * 思考(thinking)型モデル対策：generationConfigにthinkingConfigを付与。
+ * 思考トークンが出力上限を食い尽くして回答が空になるのを防ぐ。
+ * CONFIG.GEMINI_THINKING_BUDGET が null の場合は何もしない（旧モデル互換）。
+ */
+function applyThinkingConfig_(generationConfig) {
+  var budget = CONFIG.GEMINI_THINKING_BUDGET;
+  if (budget == null) return;
+  generationConfig.thinkingConfig = { thinkingBudget: budget };
 }
 
 /** Gemini レスポンス共通パーサ */

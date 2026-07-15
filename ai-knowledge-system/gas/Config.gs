@@ -42,10 +42,17 @@ var CONFIG = {
 
   // ---- 使用するLLM (Gemini) ----
   //  Workspace と相性が良く、無料枠があり、動画も直接解析できるため既定は Gemini。
-  //  用途で使い分け：軽い要約=flash / 重い分析・動画視聴=flash or pro
-  GEMINI_MODEL:       'gemini-2.0-flash',   // 通常の要約・生成
-  GEMINI_MODEL_VIDEO: 'gemini-2.0-flash',   // 画面録画の視聴解析（マルチモーダル）
+  //  ※ モデル名は時期により提供状況が変わります（2.0-flashが無料枠0/2.5-flashが404 等）。
+  //    実際に使えるモデルは AI Studio のモデル一覧で確認し、ここを差し替えてください。
+  //    2026/07時点で動作確認できたモデル: gemini-3-flash-preview
+  GEMINI_MODEL:       'gemini-3-flash-preview',   // 通常の要約・生成
+  GEMINI_MODEL_VIDEO: 'gemini-3-flash-preview',   // 画面録画の視聴解析（マルチモーダル）
   GEMINI_API_BASE:    'https://generativelanguage.googleapis.com',
+
+  //  思考(thinking)型モデル対策：
+  //   思考トークンが出力上限を食い尽くし回答が空になるのを防ぐため思考をスキップ。
+  //   0=思考オフ。思考型でない旧モデルに戻す場合は null にすると本設定を送りません。
+  GEMINI_THINKING_BUDGET: 0,
 
   // ---- 挙動 ----
   MAX_PROCESS_PER_RUN: 20,   // 1回の自動処理で捌く最大件数（API/時間の節約）

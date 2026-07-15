@@ -53,7 +53,8 @@ function ingestDmRecordings() {
   while (files.hasNext() && processed < CONFIG.MAX_PROCESS_PER_RUN) {
     var file = files.next();
     var mime = file.getMimeType();
-    if (mime.indexOf('video') !== 0) continue;      // 動画のみ
+    // 動画(画面録画)と画像(スクショ)の両方に対応
+    if (mime.indexOf('video') !== 0 && mime.indexOf('image') !== 0) continue;
     if (known[file.getId()]) continue;               // 取込済みはスキップ
 
     try {
@@ -73,14 +74,16 @@ function ingestDmRecordings() {
       sh.appendRow(row);
     }
   }
-  Logger.log('ingestDmRecordings: ' + processed + '件の録画を解析');
+  Logger.log('ingestDmRecordings: ' + processed + '件の録画/スクショを解析');
+  return processed;
 }
 
-/** Geminiに画面録画を“視聴”させDM営業(エージェント開拓)を構造化 */
+/** Geminiに画面録画(動画)またはスクショ(画像)を解析させDM営業(エージェント開拓)を構造化 */
 function analyzeDmRecording_(file) {
+  var mime = file.getMimeType();
   var prompt =
     'これは「代理店/エージェント開拓」の営業担当者が、SNSのDM等で相手(集客・送客してくれるエージェント候補)に' +
-    '案件を持ちかけている「画面録画」です。画面に映るチャット/DMのやり取りを読み取り、営業手法を分析してください。' +
+    '案件を持ちかけている「画面録画またはスクリーンショット」です。画面に映るチャット/DMのやり取りを読み取り、営業手法を分析してください。' +
     '必ず次のJSONのみ返す:\n' +
     '{' +
     '"customer":"相手(エージェント)名/案件名（分かれば。無ければ推定や空文字）",' +
@@ -96,6 +99,9 @@ function analyzeDmRecording_(file) {
     '"messages":[{"step":1,"message":"実際に送った文面(できるだけ原文)","intent":"その一手の狙い/技術","reaction":"相手の反応","effect":"良/普/悪"}]' +
     '}\n' +
     '文面は新人が真似できるよう、できるだけ原文に近い形で書き出すこと。';
+  if (mime.indexOf('image') === 0) {
+    return analyzeImage_(file.getBlob(), prompt, { json: true, maxTokens: 8192 });
+  }
   return analyzeVideo_(file.getBlob(), prompt, { json: true, maxTokens: 8192 });
 }
 
@@ -157,16 +163,19 @@ function proposeForPending() {
   var last = sh.getLastRow();
   if (last < 2) return;
   var values = sh.getRange(2, 1, last - 1, DM_HEADERS.length).getValues();
+  var made = [];
   for (var i = 0; i < values.length; i++) {
     if (values[i][DM_COL.STATUS - 1] !== '解析済(提案待ち)') continue;
     try {
       var url = proposeDmStrategy_(values[i]);
       sh.getRange(i + 2, DM_COL.PROPOSAL_URL).setValue(url);
       sh.getRange(i + 2, DM_COL.STATUS).setValue('提案済');
+      made.push({ customer: values[i][DM_COL.CUSTOMER - 1], url: url });
     } catch (err) {
       Logger.log('提案生成 失敗 行' + (i + 2) + ': ' + err);
     }
   }
+  return made;
 }
 
 /**

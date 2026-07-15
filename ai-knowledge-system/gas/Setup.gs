@@ -77,18 +77,11 @@ function ensureFolder_(propKey, name) {
 /** 定期トリガーを登録（重複登録は自動で防止） */
 function installTriggers() {
   removeTriggers_();
-  // 🅱 ナレッジ要約：15分毎
-  ScriptApp.newTrigger('processPending').timeBased().everyMinutes(15).create();
-  // 🅰 商談→提案書：10分毎
-  ScriptApp.newTrigger('processDeals').timeBased().everyMinutes(10).create();
-  // 🆕 DM録画の取込：1時間毎
-  ScriptApp.newTrigger('ingestDmRecordings').timeBased().everyHours(1).create();
-  // 🆕 DM提案生成：1時間毎（取込の少し後）
-  ScriptApp.newTrigger('proposeForPending').timeBased().everyHours(1).create();
-  // レポート：毎週月曜 8:00
-  ScriptApp.newTrigger('generateWeeklyReport').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
-  ScriptApp.newTrigger('generateDmReport').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
-  Logger.log('トリガーを登録しました');
+  // ぜんぶ自動の司令塔：15分毎に一括処理 → 新規分だけ Google Chat に通知
+  ScriptApp.newTrigger('autoRunAll').timeBased().everyMinutes(15).create();
+  // レポート：毎週月曜 8:00（経営レポート & DM営業レポートをまとめて）
+  ScriptApp.newTrigger('autoWeeklyReports').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
+  Logger.log('トリガーを登録しました（autoRunAll:15分毎 / autoWeeklyReports:週次）');
 }
 
 function removeTriggers_() {
@@ -100,12 +93,15 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('AI営業スイート')
     .addItem('① 初期セットアップ(setup)', 'setup')
-    .addItem('② トリガー登録', 'installTriggers')
+    .addItem('② 自動運用をON(トリガー登録)', 'installTriggers')
+    .addItem('③ Chat通知テスト', 'testChatNotify')
+    .addSeparator()
+    .addItem('▶ 今すぐ全部まとめて実行', 'autoRunAll')
     .addSeparator()
     .addItem('🅱 ナレッジ要約を今すぐ', 'processPending')
     .addItem('🅱 週次経営レポートを今すぐ', 'generateWeeklyReport')
     .addItem('🅰 商談→提案書を今すぐ', 'processDeals')
-    .addItem('🆕 DM録画を取り込む', 'ingestDmRecordings')
+    .addItem('🆕 DM録画/スクショを取り込む', 'ingestDmRecordings')
     .addItem('🆕 DM提案を生成', 'proposeForPending')
     .addItem('🆕 DM営業レポートを今すぐ', 'generateDmReport')
     .addToUi();

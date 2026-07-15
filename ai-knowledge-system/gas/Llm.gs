@@ -174,6 +174,42 @@ function applyThinkingConfig_(generationConfig) {
   generationConfig.thinkingConfig = { thinkingBudget: budget };
 }
 
+/**
+ * スクリーンショット(画像)を Gemini に解析させる（inlineData方式・軽量）。
+ * DM営業のスクショからチャット内容を読み取る用途。
+ */
+function analyzeImage_(blob, prompt, opts) {
+  opts = opts || {};
+  var key = prop_('GEMINI_API_KEY', true);
+  var model = opts.model || CONFIG.GEMINI_MODEL_VIDEO;
+  var payload = {
+    contents: [{
+      role: 'user',
+      parts: [
+        { inlineData: { mimeType: blob.getContentType() || 'image/png', data: Utilities.base64Encode(blob.getBytes()) } },
+        { text: prompt }
+      ]
+    }],
+    generationConfig: {
+      temperature: opts.temperature != null ? opts.temperature : 0.3,
+      maxOutputTokens: opts.maxTokens || 8192
+    }
+  };
+  if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
+  applyThinkingConfig_(payload.generationConfig);
+
+  var res = UrlFetchApp.fetch(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
+    method: 'post', contentType: 'application/json',
+    payload: JSON.stringify(payload), muteHttpExceptions: true
+  });
+  var text = parseGeminiResponse_(res);
+  if (opts.json) {
+    try { return JSON.parse(text); }
+    catch (e) { var m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw e; }
+  }
+  return text;
+}
+
 /** Gemini レスポンス共通パーサ */
 function parseGeminiResponse_(res) {
   var code = res.getResponseCode();

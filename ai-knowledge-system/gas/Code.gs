@@ -105,6 +105,7 @@ function processPending() {
     }
   }
   Logger.log('processPending: ' + processed + '件を処理');
+  return processed;
 }
 
 /** NotebookLM用の母艦Docに1件追記（=会社を全部知ったAIの元データ） */

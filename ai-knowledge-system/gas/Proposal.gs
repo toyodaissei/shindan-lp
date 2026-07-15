@@ -56,8 +56,9 @@ function addDeal(o) {
 function processDeals() {
   var sh = sheet_(CONFIG.SHEET_DEALS, DEAL_HEADERS);
   var last = sh.getLastRow();
-  if (last < 2) return;
+  if (last < 2) return [];
   var values = sh.getRange(2, 1, last - 1, DEAL_HEADERS.length).getValues();
+  var created = [];
 
   for (var i = 0; i < values.length; i++) {
     var r = values[i];
@@ -66,6 +67,7 @@ function processDeals() {
     try {
       var content = buildProposalContent_(r[DEAL_COL.CUSTOMER - 1], r[DEAL_COL.RAW - 1]);
       var made = buildSlides_(r[DEAL_COL.CUSTOMER - 1], content);
+      created.push({ customer: r[DEAL_COL.CUSTOMER - 1], slideUrl: made.slideUrl });
       sh.getRange(rowNum, DEAL_COL.SLIDE_URL).setValue(made.slideUrl);
       sh.getRange(rowNum, DEAL_COL.PDF_URL).setValue(made.pdfUrl);
       sh.getRange(rowNum, DEAL_COL.STATUS).setValue('生成済');
@@ -87,6 +89,7 @@ function processDeals() {
       Logger.log('processDeals 行' + rowNum + ' 失敗: ' + err);
     }
   }
+  return created;
 }
 
 /** 商談文字起こし → 提案書の構成をJSONで得る */

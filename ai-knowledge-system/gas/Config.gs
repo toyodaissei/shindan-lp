@@ -23,6 +23,7 @@
  *    ★ GEMINI_API_KEY        … Google AI Studio で無料発行
  *                              https://aistudio.google.com/apikey
  *    ★ REPORT_RECIPIENTS     … レポート送付先メール（カンマ区切り）
+ *    △ CHAT_WEBHOOK_URL      … Google Chat スペースのWebhook URL（任意・入れると結果がChatに届く）
  *      SPREADSHEET_ID        … ナレッジ等を貯めるスプレッドシート
  *      NOTEBOOKLM_DOC_ID     … NotebookLM に食わせる母艦 Google Doc
  *      KEIEI_REPORT_DOC_ID   … 経営レポート出力先 Google Doc

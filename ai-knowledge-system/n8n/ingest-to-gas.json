@@ -1,0 +1,62 @@
+{
+  "name": "AI営業スイート ナレッジ/商談 投入",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sales-intel",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "sales-intel-webhook"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {"id":"1","name":"target","value":"={{ $json.body.target || 'knowledge' }}","type":"string"},
+            {"id":"2","name":"type","value":"={{ $json.body.type }}","type":"string"},
+            {"id":"3","name":"who","value":"={{ $json.body.who }}","type":"string"},
+            {"id":"4","name":"customer","value":"={{ $json.body.customer }}","type":"string"},
+            {"id":"5","name":"transcript","value":"={{ $json.body.transcript || $json.body.text }}","type":"string"},
+            {"id":"6","name":"ts","value":"={{ $json.body.ts || $now.toISO() }}","type":"string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-node",
+      "name": "Normalize",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.GAS_WEBAPP_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "http-node",
+      "name": "Forward to GAS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Normalize", "type": "main", "index": 0 }]] },
+    "Normalize": { "main": [[{ "node": "Forward to GAS", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "notes": "GAS_WEBAPP_URL には Apps Script のウェブアプリ公開URLを n8n の変数(Variables)で設定。商談(提案書生成)に回したい場合は body.target='deal' を付けてPOSTする。"
+}

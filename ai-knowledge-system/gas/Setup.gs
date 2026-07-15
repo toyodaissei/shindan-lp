@@ -42,6 +42,16 @@ function setup() {
   ensureFolder_('DM_RECORDINGS_FOLDER', 'DM営業_画面録画');
   ensureFolder_('PROPOSAL_FOLDER', 'AI生成_提案書');
 
+  // 承認ボタンURLの改ざん防止トークン（無ければ生成）
+  if (!props.getProperty('APPROVE_TOKEN')) {
+    props.setProperty('APPROVE_TOKEN', Utilities.getUuid().replace(/-/g, ''));
+  }
+  // Webアプリ公開済みならURLを保存（承認ボタンのリンク先）
+  try {
+    var wu = ScriptApp.getService().getUrl();
+    if (wu) props.setProperty('WEBAPP_URL', wu);
+  } catch (e) {}
+
   // 未設定チェック
   var miss = [];
   if (!props.getProperty('GEMINI_API_KEY')) miss.push('GEMINI_API_KEY');

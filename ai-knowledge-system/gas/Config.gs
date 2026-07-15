@@ -58,7 +58,12 @@ var CONFIG = {
   // ---- 挙動 ----
   MAX_PROCESS_PER_RUN: 20,   // 1回の自動処理で捌く最大件数（API/時間の節約）
   REPORT_DAYS:         7,    // 週次レポートで集計する日数
-  TIMEZONE:            'Asia/Tokyo'
+  TIMEZONE:            'Asia/Tokyo',
+
+  // 承認モード:
+  //  true  = DM提案は自動生成せず、Chatの「✅提案を作成」ボタンを押してから生成（人が承認）
+  //  false = 解析後そのまま自動で提案まで生成（全自動）
+  APPROVAL_MODE: true
 };
 
 /** スクリプトプロパティを安全に取得 */

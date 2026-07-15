@@ -30,20 +30,30 @@ function autoRunAll() {
     }
   }, '商談提案書');
 
-  // 🆕 DM録画/スクショ 解析 → その後に提案生成
+  // 🆕 DM録画/スクショ 解析
   safe_(function () {
     var got = ingestDmRecordings();
     if (got) lines.push('📹 DMの録画/スクショを ' + got + ' 件、解析しました');
   }, 'DM解析');
 
-  safe_(function () {
-    var props = proposeForPending() || [];
-    if (props.length) {
-      lines.push('📝 エージェント開拓の提案書を ' + props.length + ' 件つくりました');
-      props.forEach(function (p) { lines.push('　・' + chatLink_(p.url, p.customer + ' の提案書')); });
-    }
-  }, 'DM提案');
+  if (CONFIG.APPROVAL_MODE) {
+    // 承認モード：提案は自動生成せず、Chatに承認カードを送る（人がボタンで承認）
+    safe_(function () {
+      var cards = postPendingApprovalCards_();
+      if (cards) lines.push('🔔 承認待ちの案件 ' + cards + ' 件をChatに送りました（「✅提案を作成」を押してください）');
+    }, 'DM承認カード');
+  } else {
+    // 全自動：そのまま提案まで生成
+    safe_(function () {
+      var props = proposeForPending() || [];
+      if (props.length) {
+        lines.push('📝 エージェント開拓の提案書を ' + props.length + ' 件つくりました');
+        props.forEach(function (p) { lines.push('　・' + chatLink_(p.url, p.customer + ' の提案書')); });
+      }
+    }, 'DM提案');
+  }
 
+  // 承認モードでは承認カードを個別に送るので、まとめ通知は他に新規がある時だけ
   if (lines.length) {
     var ss = '';
     try { ss = '\n\n📂 ' + chatLink_(openBook_().getUrl(), 'データ一覧(スプレッドシート)'); } catch (e) {}

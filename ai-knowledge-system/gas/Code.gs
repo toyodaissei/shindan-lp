@@ -190,8 +190,11 @@ function generateReport_(days, label) {
   Logger.log(label + 'レポートを送信しました → ' + to);
 }
 
-/** doGet: 動作確認用 */
-function doGet() {
+/** doGet: 承認ボタンの処理 or 動作確認 */
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action) {
+    return handleApproveAction_(e);   // Chat承認ボタンからのリンク
+  }
   return jsonOut_({ ok: true, service: 'AI営業インテリジェンス スイート', time: new Date().toISOString() });
 }
 

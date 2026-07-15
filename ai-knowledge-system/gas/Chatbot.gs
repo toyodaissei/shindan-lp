@@ -17,11 +17,13 @@
  */
 
 /** DM案件1件の「承認カード」をChatに送る */
-function postDmApprovalCard_(caseId, customer, summary, outcome) {
-  var url = actionUrl_('propose', caseId);
+function postDmApprovalCard_(caseId, customer, summary, outcome, fileUrl) {
+  var proposeUrl = actionUrl_('propose', caseId);
+  var skipUrl = actionUrl_('skip', caseId);
   var buttons = [];
-  if (url) buttons.push(cardButton_('✅ 提案を作成する', url));
-  try { buttons.push(cardButton_('📂 DM案件シート', openBook_().getUrl())); } catch (e) {}
+  if (proposeUrl) buttons.push(cardButton_('✅ 提案を作成', proposeUrl));
+  if (fileUrl)    buttons.push(cardButton_('🎬 録画/スクショを見る', fileUrl));
+  if (skipUrl)    buttons.push(cardButton_('⏭ 見送る', skipUrl));
 
   postCard_({
     cardId: 'dm-approve-' + caseId,
@@ -43,6 +45,8 @@ function postProposalReadyCard_(caseId, customer, docUrl) {
   if (docUrl) buttons.push(cardButton_('📄 提案書を開く', docUrl));
   var sendUrl = actionUrl_('send', caseId);
   if (sendUrl) buttons.push(cardButton_('📧 担当に送信', sendUrl));
+  var regenUrl = actionUrl_('regen', caseId);
+  if (regenUrl) buttons.push(cardButton_('🔁 作り直す', regenUrl));
 
   postCard_({
     cardId: 'dm-ready-' + caseId,
@@ -72,7 +76,9 @@ function postPendingApprovalCards_() {
   for (var i = 0; i < values.length; i++) {
     if (values[i][DM_COL.STATUS - 1] !== '解析済(提案待ち)') continue;
     var r = values[i];
-    postDmApprovalCard_(r[DM_COL.ID - 1], r[DM_COL.CUSTOMER - 1], r[DM_COL.SUMMARY - 1], r[DM_COL.OUTCOME - 1]);
+    var fileUrl = '';
+    try { if (r[DM_COL.FILE_ID - 1]) fileUrl = DriveApp.getFileById(r[DM_COL.FILE_ID - 1]).getUrl(); } catch (e) {}
+    postDmApprovalCard_(r[DM_COL.ID - 1], r[DM_COL.CUSTOMER - 1], r[DM_COL.SUMMARY - 1], r[DM_COL.OUTCOME - 1], fileUrl);
     sh.getRange(i + 2, DM_COL.STATUS).setValue('承認待ち');
     sent++;
   }
@@ -109,6 +115,7 @@ function handleApproveAction_(e) {
 
   if (p.action === 'send') {
     var docUrl = row[DM_COL.PROPOSAL_URL - 1];
+    if (!docUrl) return htmlPage_('まだ提案がありません', '先に「✅ 提案を作成」を押してください。');
     var to = prop_('REPORT_RECIPIENTS', false);
     if (to) {
       MailApp.sendEmail({
@@ -121,6 +128,21 @@ function handleApproveAction_(e) {
     sh.getRange(rowNum, DM_COL.STATUS).setValue('送付済');
     notifyChat_('📧 ' + customer + ' の提案書を担当（' + (to || '未設定') + '）へ送付しました。');
     return htmlPage_('📧 送信しました', customer + ' の提案書を担当者へメールしました。');
+  }
+
+  if (p.action === 'skip') {
+    sh.getRange(rowNum, DM_COL.STATUS).setValue('見送り');
+    return htmlPage_('⏭ 見送りにしました', customer + ' の案件を見送りにしました。今後この案件のカードは届きません。');
+  }
+
+  if (p.action === 'regen') {
+    var url2 = proposeDmStrategy_(row);
+    sh.getRange(rowNum, DM_COL.PROPOSAL_URL).setValue(url2);
+    sh.getRange(rowNum, DM_COL.STATUS).setValue('提案済');
+    postProposalReadyCard_(row[DM_COL.ID - 1], customer, url2);
+    return htmlPage_('🔁 作り直しました',
+      customer + ' の提案書を作り直し、Chatに新しいリンクを送りました。<br><br>' +
+      '<a href="' + url2 + '" target="_blank">📄 提案書を開く</a>');
   }
 
   return htmlPage_('不明な操作', '対応していない操作です。');

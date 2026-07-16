@@ -4,6 +4,24 @@
 
 ---
 
+## ⚡ いちばん簡単な使い方（承認ボタン・Chat・Webアプリ すべて不要）
+
+既定は `APPROVAL_MODE: false`（全自動）です。設定はこれだけ：
+
+1. スクリプトプロパティに `GEMINI_API_KEY` と `REPORT_RECIPIENTS` を入れる（STEP 2）
+2. `setup` を実行（シート・フォルダを自動作成）
+3. `installTriggers` を実行（15分毎の自動処理＋シートのメニューをON）
+
+**使い方 = Driveの「DM営業_画面録画」フォルダに録画/スクショを入れるだけ。**
+15分以内に自動で提案書ができ、**スプレッドシートの「DM案件」シート**と**「AI生成_提案書」フォルダ**にリンクが出ます。
+
+**誰でも“今すぐ実行”したい時** → スプレッドシートを開く → 上部メニュー
+**「AI営業スイート」→「▶ 今すぐ全部まとめて実行」**（Apps Scriptを開く必要なし）。
+
+> Google Chat通知や承認ボタンは“おまけ”です。要らなければ STEP 5・6.5 は飛ばしてOK。
+
+---
+
 ## STEP 0. 準備するもの
 - Googleアカウント（Workspace / 個人Gmailどちらでも可）
 - **Gemini APIキー**（無料）… [Google AI Studio](https://aistudio.google.com/apikey) → 「Create API key」

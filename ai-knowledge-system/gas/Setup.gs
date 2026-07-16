@@ -87,11 +87,17 @@ function ensureFolder_(propKey, name) {
 /** 定期トリガーを登録（重複登録は自動で防止） */
 function installTriggers() {
   removeTriggers_();
-  // ぜんぶ自動の司令塔：15分毎に一括処理 → 新規分だけ Google Chat に通知
+  // ぜんぶ自動の司令塔：15分毎に一括処理（誰もボタンを押さなくてよい）
   ScriptApp.newTrigger('autoRunAll').timeBased().everyMinutes(15).create();
   // レポート：毎週月曜 8:00（経営レポート & DM営業レポートをまとめて）
   ScriptApp.newTrigger('autoWeeklyReports').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
-  Logger.log('トリガーを登録しました（autoRunAll:15分毎 / autoWeeklyReports:週次）');
+  // スプレッドシートを開いた時に「AI営業スイート」メニューを出す（誰でも手動実行できる）
+  try {
+    ScriptApp.newTrigger('onOpen').forSpreadsheet(prop_('SPREADSHEET_ID', true)).onOpen().create();
+  } catch (e) {
+    Logger.log('メニュー用トリガー登録スキップ: ' + e);
+  }
+  Logger.log('トリガーを登録しました（autoRunAll:15分毎 / 週次レポート / シートのメニュー）');
 }
 
 function removeTriggers_() {

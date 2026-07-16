@@ -61,9 +61,10 @@ var CONFIG = {
   TIMEZONE:            'Asia/Tokyo',
 
   // 承認モード:
+  //  false = 解析後そのまま自動で提案まで生成（全自動・いちばん簡単。既定）
   //  true  = DM提案は自動生成せず、Chatの「✅提案を作成」ボタンを押してから生成（人が承認）
-  //  false = 解析後そのまま自動で提案まで生成（全自動）
-  APPROVAL_MODE: true
+  //          ※trueにする場合は CHAT_WEBHOOK_URL とWebアプリのデプロイが必要
+  APPROVAL_MODE: false
 };
 
 /** スクリプトプロパティを安全に取得 */

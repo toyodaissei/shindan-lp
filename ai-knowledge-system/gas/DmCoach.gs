@@ -82,15 +82,18 @@ function ingestDmRecordings() {
 function analyzeDmRecording_(file) {
   var mime = file.getMimeType();
   var prompt =
-    'これは「代理店/エージェント開拓」の営業担当者が、SNSのDM等で相手(集客・送客してくれるエージェント候補)に' +
-    '案件を持ちかけている「画面録画またはスクリーンショット」です。画面に映るチャット/DMのやり取りを読み取り、営業手法を分析してください。' +
+    'これは当社の営業担当者が、SNS(Threads/Instagram/X/LINE等)のDM・スレッドで行った「実際の営業・開拓のやり取り」の' +
+    '画面録画またはスクリーンショットです。画面に映る事実だけを正確に読み取り、営業手法を分析してください。\n' +
+    '【厳守】録画に映っていない事柄を推測で足さない。特に「相手のフォロワーに広告を出す/リーチを買う」等の' +
+    'インフルエンサーマーケティングを、実際にそうでない限り絶対に当てはめない。\n' +
     '必ず次のJSONのみ返す:\n' +
     '{' +
-    '"customer":"相手(エージェント)名/案件名（分かれば。無ければ推定や空文字）",' +
-    '"product":"持ちかけている案件/商材(例:27卒面談送客案件 など)",' +
+    '"objective":"この営業の目的を一言で。録画の実態に基づく。例:『代理店/協業パートナーの開拓(相手にハブになってもらい顧客/学生を送客してもらう)』『自社送客の直接営業』『特定商材の販売』など",' +
+    '"customer":"相手(アカウント名/相手の属性)。分からなければ推定や空文字",' +
+    '"product":"案件/トピック名(例:学生送客の代理店開拓 / 〇〇商材の販売 など、今回のスコープ)",' +
     '"platform":"チャネル(Instagram/InstagramDM/Threads/ThreadsDM/X/LINE/公式LINE/Facebook/その他)",' +
-    '"summary":"録画で何が行われたかの要約(4〜6行)",' +
-    '"technique":"使われた営業手法・トークの型(改行区切りで具体的に)",' +
+    '"summary":"録画で実際に何が行われたかの要約(4〜6行)",' +
+    '"technique":"使われた営業手法・トークの型(改行区切りで具体的に。例:定型文で打診→アポ取り→ミート設定 など実際の流れ)",' +
     '"reaction":"相手の反応・温度感",' +
     '"outcome":"未返信 / 返信 / 面談 / 提携 のいずれか(判断できなければ最も近いもの。提携=成約)",' +
     '"sent":送ったメッセージ数(整数),"replies":相手の返信数(整数),' +
@@ -118,7 +121,7 @@ function writeDmCase_(sh, file, a) {
   row[DM_COL.CUSTOMER - 1] = a.customer || file.getName();
   row[DM_COL.PRODUCT - 1] = a.product || '';
   row[DM_COL.PLATFORM - 1] = a.platform || '';
-  row[DM_COL.SUMMARY - 1] = a.summary || '';
+  row[DM_COL.SUMMARY - 1] = (a.objective ? '【営業の目的】' + a.objective + '\n' : '') + (a.summary || '');
   row[DM_COL.TECHNIQUE - 1] = a.technique || '';
   row[DM_COL.REACTION - 1] = a.reaction || '';
   row[DM_COL.OUTCOME - 1] = a.outcome || '';
@@ -257,11 +260,18 @@ function proposeDmStrategy_(caseRow) {
   var bestPatterns = collectBestPatterns_();
 
   var prompt =
-    'あなたは「代理店/エージェント開拓」に強いトップセールス兼営業コーチです。\n' +
-    '私たちは広告主と代理店の間に立つ代理店で、広告主から受けた案件(例:27卒面談送客案件)を、\n' +
-    'SNSのDM等でエージェント(集客・送客してくれる個人/法人パートナー)に持ちかけ、提携してもらうのが営業です。\n' +
-    '目的は「エージェント開拓の営業ナレッジを再現性ある形にし、新人でも回せるトークスクリプト/DMを提示する」こと。\n' +
-    '以下の対象案件に対する最適解を、過去の高成績パターンも学習材料に作ってください。\n\n' +
+    'あなたは営業の「型化(再現性化)」のプロです。以下は、当社の営業担当者が実際に行った営業・開拓のやり取り' +
+    '(画面録画/スクショから解析済み)です。この“実際のやり方”を、他の社員がそっくり真似して再現できるマニュアルと、' +
+    'そこから発想を広げるための提案に落とします。\n' +
+    '【最重要・絶対厳守】\n' +
+    '1) 提案は必ず「録画から読み取った実際の営業目的・相手・手法」に忠実に沿わせる。' +
+    '勝手に別のビジネスモデル(例:インフルエンサーマーケティング／相手のフォロワーにリーチや広告を売る 等)を持ち込まない。\n' +
+    '2) 下記「営業の目的」が代理店/協業パートナーの開拓(相手にハブになってもらい顧客/学生を送客してもらう)なら、' +
+    'その"協業関係を結ぶ"提案にする。相手のフォロワーに広告を出す話には絶対にしない。\n' +
+    '3) 案件のトピック(例:学生送客/特定商材/自社送客 など)に厳密にスコープを合わせ、他トピックを混ぜない。\n' +
+    '4) マニュアル型=録画の実際のやり方（定型文→アポ→ミート等）を新人がそのまま再現できる手順に。' +
+    '提案型=そのやり方を土台に、新しいアイデアが湧くきっかけ(切り口＋数値)に。\n' +
+    '過去の高成績パターンも学習材料に使ってください。\n\n' +
     '=== 対象案件 ===\n' +
     '相手(エージェント)/案件: ' + caseRow[DM_COL.CUSTOMER - 1] + '\n' +
     '案件/商材: ' + caseRow[DM_COL.PRODUCT - 1] + '\n' +
@@ -291,9 +301,9 @@ function proposeDmStrategy_(caseRow) {
     '必ず {{想定報酬額}} {{想定月収}} {{フォロワー数}} {{実績数値}} のような変数にする。使った変数は漏れなく "variables" に列挙する。\n' +
     '・steps は各チャネル特性(Instagram/ThreadsのDMは短く軽快、公式LINEは段階的、Xは簡潔、Facebookはやや丁寧)を踏まえ、6〜10個。\n' +
     '・"talkScript" は面談/通話でそのまま読めるレベルで具体的に。\n' +
-    '・"talkScript.objection" には、エージェント開拓で頻出する次の懸念への切り返しを必ず含める:' +
-    '「報酬条件が曖昧で自分がやる理由が分からない」「稼働・作業負荷が見えず不安」。' +
-    'これらに加え、対象案件の状況に応じた懸念も足す。\n' +
+    '・"talkScript.objection" には、この案件の目的・相手に即して相手が実際に抱く懸念への切り返しを2〜4個入れる' +
+    '(例:協業のメリットが不明/手間がかかりそう/実績・信頼性は?/既に他社とやっている 等、案件に合うものを選ぶ)。' +
+    '案件と無関係な一般論の懸念は入れない。\n' +
     '・"ideas" は必ず 想定返信率・面談化率・提携率 の3数値を添え、さらにアイデアが広がる“きっかけ”にする。\n' +
     '・"basis"(根拠)は、上記「過去の高成績パターン」に実データがあればそれを引用し、無い場合は「一般値/仮説」と明記する。';
 
@@ -310,89 +320,140 @@ function proposeDmStrategy_(caseRow) {
   return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1], caseRow[DM_COL.PLATFORM - 1], o);
 }
 
-/** 提案JSON → 見やすいGoogle Docに整形して書き出し、URLを返す */
+/** 提案書のカラーパレット（LPと統一） */
+var DOC_STYLE = {
+  navy: '#1c2b4a', gray: '#5a6577',
+  varc: '#1558b0',   // 変数セクション（青）
+  manual: '#0e9f7e', // マニュアル型（ティール）
+  idea: '#c77d17',   // 提案型（アンバー）
+  box: '#eef3f8'     // コピペ文面の背景
+};
+
+/** セクション見出し（色バンド） */
+function docBand_(b, text, hex) {
+  var p = b.appendParagraph('  ' + text + '  ');
+  p.setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  p.setSpacingBefore(20).setSpacingAfter(10);
+  p.editAsText().setForegroundColor('#ffffff').setBackgroundColor(hex).setBold(true).setFontSize(14);
+  return p;
+}
+/** 小見出し（色文字） */
+function docSub_(b, text, hex) {
+  var p = b.appendParagraph(text);
+  p.setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  p.setSpacingBefore(12).setSpacingAfter(4);
+  p.editAsText().setForegroundColor(hex).setBold(true).setFontSize(12.5);
+  return p;
+}
+/** 本文行 */
+function docText_(b, text, opt) {
+  opt = opt || {};
+  var p = b.appendParagraph(text);
+  p.setSpacingAfter(opt.after != null ? opt.after : 3);
+  var t = p.editAsText();
+  t.setFontSize(opt.size || 11).setForegroundColor(opt.color || DOC_STYLE.navy).setBold(!!opt.bold);
+  if (opt.indent) p.setIndentStart(opt.indent);
+  return p;
+}
+
+/** 提案JSON → 色分け・余白・文字サイズを整えたGoogle Docに書き出し、URLを返す */
 function writeDmProposalDoc_(customer, product, platform, o) {
+  var S = DOC_STYLE;
   var folderId = prop_('PROPOSAL_FOLDER', false);
-  var name = 'エージェント開拓提案_' + (customer || '案件') + '_' +
+  var topic = product || customer || '営業案件';
+  var name = '営業ナレッジ提案_' + topic + '_' +
     Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyyMMdd-HHmm');
   var doc = DocumentApp.create(name);
   var b = doc.getBody();
+  b.setMarginTop(48).setMarginBottom(48).setMarginLeft(56).setMarginRight(56);
 
-  b.appendParagraph('エージェント開拓 最適解 提案書').setHeading(DocumentApp.ParagraphHeading.TITLE);
-  b.appendParagraph('相手/案件: ' + (customer || '') + '　/　案件・商材: ' + (product || '') +
-    '　/　主なチャネル: ' + (platform || ''));
+  // タイトル
+  var title = b.appendParagraph('営業ナレッジ 提案書');
+  title.setHeading(DocumentApp.ParagraphHeading.TITLE).setSpacingAfter(2);
+  title.editAsText().setForegroundColor(S.navy).setFontSize(24).setBold(true);
+  // スコープ（何の案件か）
+  docText_(b, '対象トピック：' + topic, { color: S.manual, bold: true, size: 13, after: 1 });
+  docText_(b, '相手：' + (customer || '-') + '　｜　主なチャネル：' + (platform || '-'),
+    { color: S.gray, size: 10, after: 2 });
   b.appendHorizontalRule();
 
-  // 差し込み変数一覧（新人がまず埋めるもの）
+  // ◇ 差し込み変数一覧
   if (o.variables && o.variables.length) {
-    b.appendParagraph('◇ 差し込み変数一覧（送信前にここを埋める）')
-      .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    docBand_(b, '◇ 差し込み変数一覧（送信前にここを埋める）', S.varc);
     o.variables.forEach(function (v) {
-      b.appendListItem((v.key || '') + ' … ' + (v.desc || '') +
+      var li = b.appendListItem((v.key || '') + ' … ' + (v.desc || '') +
         (v.example ? '（例: ' + v.example + '）' : ''));
+      li.setSpacingAfter(2);
+      li.editAsText().setFontSize(11).setForegroundColor(S.navy);
+      li.editAsText().setForegroundColor(0, Math.max(0, (v.key || '').length - 1), S.varc);
     });
   }
 
   // ① マニュアル型
-  b.appendParagraph('① マニュアル型（新人が1→10でそのまま真似できる手順書）')
-    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
   var m = o.manual || {};
-  if (m.goal) b.appendParagraph('ゴール：' + m.goal).editAsText().setBold(true);
+  docBand_(b, '① マニュアル型（新人が1→10でそのまま真似できる手順書）', S.manual);
+  if (m.goal) docText_(b, '🎯 ゴール：' + m.goal, { bold: true, size: 11.5, after: 6 });
 
-  b.appendParagraph('― DM手順（チャネル別・コピペ文面）―').setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  docSub_(b, '― DM手順（チャネル別・コピペ文面）―', S.manual);
   (m.steps || []).forEach(function (s) {
-    var head = 'STEP ' + (s.no || '') + '：' + (s.action || '');
-    if (s.channel) head += '　【' + s.channel + '】';
-    b.appendParagraph(head).setHeading(DocumentApp.ParagraphHeading.HEADING3);
+    var head = b.appendParagraph('STEP ' + (s.no || '') + '　' + (s.action || ''));
+    head.setHeading(DocumentApp.ParagraphHeading.HEADING3).setSpacingBefore(8).setSpacingAfter(2);
+    head.editAsText().setForegroundColor(S.navy).setBold(true).setFontSize(11.5);
+    if (s.channel) docText_(b, '📱 チャネル：' + s.channel, { color: S.manual, size: 10, after: 2 });
     if (s.script) {
-      b.appendParagraph('▼ そのまま送れる文面（{{ }}を差し替え）');
+      docText_(b, '▼ そのまま送れる文面（{{ }}を差し替え）', { color: S.gray, size: 9, bold: true, after: 1 });
       var q = b.appendParagraph(s.script);
-      q.setIndentStart(18);
-      q.editAsText().setItalic(true);
+      q.setIndentStart(14).setIndentEnd(6).setSpacingAfter(6).setSpacingBefore(2);
+      q.editAsText().setBackgroundColor(S.box).setForegroundColor(S.navy).setFontSize(11);
     }
-    if (s.timing) b.appendParagraph('タイミング：' + s.timing);
-    if (s.point)  b.appendParagraph('注意：' + s.point);
+    if (s.timing) docText_(b, '⏰ タイミング：' + s.timing, { color: S.gray, size: 10, after: 1 });
+    if (s.point)  docText_(b, '⚠️ 注意：' + s.point, { color: S.gray, size: 10, after: 4 });
   });
 
-  // 会話トークスクリプト（面談/通話用）
+  // 会話トークスクリプト
   var t = m.talkScript;
   if (t) {
-    b.appendParagraph('― 面談/通話トークスクリプト ―').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    if (t.opening) b.appendParagraph('■ 掴み：' + t.opening);
+    docSub_(b, '― 面談/通話トークスクリプト ―', S.manual);
+    if (t.opening) docText_(b, '■ 掴み：' + t.opening, { after: 4 });
     if (t.hearing && t.hearing.length) {
-      b.appendParagraph('■ ヒアリング');
-      t.hearing.forEach(function (x) { b.appendListItem(x); });
+      docText_(b, '■ ヒアリング', { bold: true, after: 1 });
+      t.hearing.forEach(function (x) { b.appendListItem(x).editAsText().setFontSize(11).setForegroundColor(S.navy); });
     }
-    if (t.proposal) b.appendParagraph('■ 提案：' + t.proposal);
+    if (t.proposal) docText_(b, '■ 提案：' + t.proposal, { after: 4 });
     if (t.objection && t.objection.length) {
-      b.appendParagraph('■ 反論処理');
-      t.objection.forEach(function (x) { b.appendListItem('「' + (x.if || '') + '」→ ' + (x.say || '')); });
+      docText_(b, '■ 反論処理', { bold: true, after: 1 });
+      t.objection.forEach(function (x) {
+        b.appendListItem('「' + (x['if'] || '') + '」→ ' + (x.say || ''))
+          .editAsText().setFontSize(11).setForegroundColor(S.navy);
+      });
     }
-    if (t.closing) b.appendParagraph('■ クロージング：' + t.closing);
+    if (t.closing) docText_(b, '■ クロージング：' + t.closing, { after: 4 });
   }
 
   if (m.ng && m.ng.length) {
-    b.appendParagraph('やってはいけないこと').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    m.ng.forEach(function (x) { b.appendListItem('× ' + x); });
+    docSub_(b, '🚫 やってはいけないこと', '#c0392b');
+    m.ng.forEach(function (x) {
+      b.appendListItem('× ' + x).editAsText().setFontSize(11).setForegroundColor('#c0392b');
+    });
   }
 
   // ② 提案型
-  b.appendParagraph('② 提案型（さらにアイデアが広がるきっかけ・数値つき）')
-    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  docBand_(b, '② 提案型（さらにアイデアが広がるきっかけ・数値つき）', S.idea);
   var idea = o.ideas || {};
   (idea.angles || []).forEach(function (a) {
-    b.appendParagraph('◆ ' + (a.title || '')).setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    if (a.why)  b.appendParagraph('なぜ効く：' + a.why);
-    if (a.try)  b.appendParagraph('試し方：' + a.try);
-    b.appendParagraph('想定 返信率：' + (a.expReplyRate || '-') +
-      '　/　面談化率：' + (a.expMeetingRate || '-') +
-      '　/　提携(成約)率：' + (a.expPartnerRate || '-'))
-      .editAsText().setBold(true);
-    if (a.basis) b.appendParagraph('根拠：' + a.basis);
+    docSub_(b, '◆ ' + (a.title || ''), S.idea);
+    if (a.why)  docText_(b, 'なぜ効く：' + a.why, { after: 2 });
+    if (a['try']) docText_(b, '試し方：' + a['try'], { after: 3 });
+    var kpi = b.appendParagraph('📊 想定 返信率 ' + (a.expReplyRate || '-') +
+      '　｜　面談化率 ' + (a.expMeetingRate || '-') +
+      '　｜　提携(成約)率 ' + (a.expPartnerRate || '-'));
+    kpi.setSpacingAfter(2).setIndentStart(8);
+    kpi.editAsText().setBackgroundColor('#fbeecf').setForegroundColor(S.navy).setBold(true).setFontSize(11);
+    if (a.basis) docText_(b, '根拠：' + a.basis, { color: S.gray, size: 10, after: 6 });
   });
   if (idea.experiments && idea.experiments.length) {
-    b.appendParagraph('数値で検証すべき実験(A/B)').setHeading(DocumentApp.ParagraphHeading.HEADING2);
-    idea.experiments.forEach(function (x) { b.appendListItem(x); });
+    docSub_(b, '🧪 数値で検証すべき実験(A/B)', S.idea);
+    idea.experiments.forEach(function (x) { b.appendListItem(x).editAsText().setFontSize(11).setForegroundColor(S.navy); });
   }
 
   doc.saveAndClose();

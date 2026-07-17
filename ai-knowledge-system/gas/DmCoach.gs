@@ -317,7 +317,8 @@ function proposeDmStrategy_(caseRow) {
       { temperature: 0.5, maxTokens: 8192, schema: DM_PROPOSAL_SCHEMA });
   }
 
-  return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1], caseRow[DM_COL.PLATFORM - 1], o);
+  return writeDmProposalDoc_(caseRow[DM_COL.CUSTOMER - 1], caseRow[DM_COL.PRODUCT - 1],
+    caseRow[DM_COL.PLATFORM - 1], o, caseRow[DM_COL.FILE_ID - 1]);
 }
 
 /** 提案書のカラーパレット（LPと統一） */
@@ -356,8 +357,39 @@ function docText_(b, text, opt) {
   return p;
 }
 
+/**
+ * 「📸 実際のやりとり画面（参考）」セクションを作り、案件の元ファイルを配置。
+ *  画像(スクショ)は埋め込み、動画はリンク。①の構成に合わせて変数一覧の直後に置く。
+ */
+function embedSourceMedia_(b, fileId) {
+  if (!fileId || String(fileId).indexOf('TEST-') === 0) return; // テスト用ダミーは除外
+  var S = DOC_STYLE;
+  var file;
+  try { file = DriveApp.getFileById(fileId); } catch (e) { return; }
+
+  docBand_(b, '📸 実際のやりとり画面（参考）', S.navy);
+  try {
+    var mime = file.getMimeType() || '';
+    if (mime.indexOf('image') === 0) {
+      var img = b.appendImage(file.getBlob());
+      var maxW = 460; // ページ幅に収める（縦横比維持）
+      if (img.getWidth() && img.getWidth() > maxW) {
+        var h = Math.round(img.getHeight() * (maxW / img.getWidth()));
+        img.setWidth(maxW).setHeight(h);
+      }
+      docText_(b, 'ファイル：' + file.getName(), { color: S.gray, size: 9, after: 8 });
+    } else {
+      var link = b.appendParagraph('🎬 録画を見る（' + file.getName() + '）');
+      link.setSpacingAfter(8);
+      link.editAsText().setLinkUrl(file.getUrl()).setFontSize(11);
+    }
+  } catch (e) {
+    docText_(b, '（元ファイルの表示に失敗：' + e + '）', { color: S.gray, size: 9, after: 8 });
+  }
+}
+
 /** 提案JSON → 色分け・余白・文字サイズを整えたGoogle Docに書き出し、URLを返す */
-function writeDmProposalDoc_(customer, product, platform, o) {
+function writeDmProposalDoc_(customer, product, platform, o, fileId) {
   var S = DOC_STYLE;
   var folderId = prop_('PROPOSAL_FOLDER', false);
   var topic = product || customer || '営業案件';
@@ -388,6 +420,9 @@ function writeDmProposalDoc_(customer, product, platform, o) {
       li.editAsText().setForegroundColor(0, Math.max(0, (v.key || '').length - 1), S.varc);
     });
   }
+
+  // 📸 実際のやりとり画面（参考）… 変数一覧の直後に元スクショ/録画を集約
+  embedSourceMedia_(b, fileId);
 
   // ① マニュアル型
   var m = o.manual || {};

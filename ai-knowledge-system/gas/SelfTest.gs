@@ -123,6 +123,22 @@ function demoDmProposal() {
   return out;
 }
 
+/** メールが届くかだけを確かめるテスト（REPORT_RECIPIENTS宛に1通送る） */
+function testEmail() {
+  var to = prop_('REPORT_RECIPIENTS', false);
+  if (!to) {
+    var msg = '❌ REPORT_RECIPIENTS が未設定です。スクリプトプロパティに送信先メールを入れてください。';
+    Logger.log(msg); return msg;
+  }
+  MailApp.sendEmail(to, '【AI営業スイート】メール送信テスト',
+    'これはテストメールです。これが届けば、実行結果のメール通知も届きます。\n送信先: ' + to);
+  var out = '✅ テストメールを送信しました → ' + to +
+    '\n（受信トレイに無ければ「迷惑メール」も確認してください）\n' +
+    '残りメール送信可能数(本日): ' + MailApp.getRemainingDailyQuota();
+  Logger.log(out);
+  return out;
+}
+
 /** おまけ: テスト行をまとめて掃除したい時（(TEST)を含む行を削除） */
 function cleanupTestRows() {
   [CONFIG.SHEET_KNOWLEDGE, CONFIG.SHEET_DEALS, CONFIG.SHEET_DM, CONFIG.SHEET_DM_MSG].forEach(function (name) {

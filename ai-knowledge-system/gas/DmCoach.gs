@@ -46,8 +46,11 @@ function ingestDmRecordings() {
   var folderId = prop_('DM_RECORDINGS_FOLDER', true);
   var root = DriveApp.getFolderById(folderId);
   var sh = sheet_(CONFIG.SHEET_DM, DM_HEADERS);
-  var known = getKnownFileIds_(sh);
+  // 失敗/対象なしの行は毎回クリア → 後から素材を入れたフォルダも再挑戦できる
+  cleanDmErrorRows_(sh);
+  var known = getKnownDoneIds_(sh);   // 成功状態のIDのみ「処理済み」として扱う
   var processed = 0;
+  var errors = [];
 
   // (1) サブフォルダ = 1案件（複数スクショ/録画をまとめて時系列で解析）
   var subs = root.getFolders();
@@ -56,13 +59,18 @@ function ingestDmRecordings() {
     if (known[sub.getId()]) continue;
     try {
       var a = analyzeDmCaseFromFolder_(sub);
-      if (!a) { markDmError_(sh, sub.getId(), sub.getName(), '画像/動画が無いためスキップ'); continue; }
+      if (!a) {
+        markDmError_(sh, sub.getId(), sub.getName(), '画像/動画が無い（アップロード完了後に再実行してください）');
+        errors.push(sub.getName() + '：フォルダ内に画像/動画が見つかりません');
+        continue;
+      }
       writeDmCase_(sh, idFile_(sub.getId(), sub.getName()), a);
       appendDmMessages_(a);
       processed++;
     } catch (err) {
       Logger.log('案件フォルダ解析 失敗 ' + sub.getName() + ': ' + err);
       markDmError_(sh, sub.getId(), sub.getName(), '解析失敗: ' + String(err).slice(0, 80));
+      errors.push(sub.getName() + '：' + String(err).slice(0, 120));
     }
   }
 
@@ -81,11 +89,37 @@ function ingestDmRecordings() {
     } catch (err) {
       Logger.log('録画解析 失敗 ' + file.getName() + ': ' + err);
       markDmError_(sh, file.getId(), file.getName(), '解析失敗: ' + String(err).slice(0, 80));
+      errors.push(file.getName() + '：' + String(err).slice(0, 120));
     }
   }
 
-  Logger.log('ingestDmRecordings: ' + processed + '件を解析');
-  return processed;
+  Logger.log('ingestDmRecordings: ' + processed + '件を解析 / エラー' + errors.length + '件');
+  return { processed: processed, errors: errors };
+}
+
+/** 成功状態(処理済み)のIDだけを返す。失敗/対象なしは含めない＝再挑戦できる */
+function getKnownDoneIds_(sh) {
+  var map = {};
+  var last = sh.getLastRow();
+  if (last < 2) return map;
+  var done = { '解析済(提案待ち)': 1, '承認待ち': 1, '提案済': 1, '送付済': 1, '見送り': 1 };
+  var vals = sh.getRange(2, 1, last - 1, DM_HEADERS.length).getValues();
+  vals.forEach(function (r) {
+    var id = r[DM_COL.FILE_ID - 1];
+    if (id && done[r[DM_COL.STATUS - 1]]) map[id] = true;
+  });
+  return map;
+}
+
+/** 失敗/対象なしの行を削除（毎回クリアして再挑戦できるように・下から削除） */
+function cleanDmErrorRows_(sh) {
+  var last = sh.getLastRow();
+  if (last < 2) return;
+  var done = { '解析済(提案待ち)': 1, '承認待ち': 1, '提案済': 1, '送付済': 1, '見送り': 1 };
+  var vals = sh.getRange(2, 1, last - 1, DM_HEADERS.length).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    if (!done[vals[i][DM_COL.STATUS - 1]]) sh.deleteRow(i + 2);
+  }
 }
 
 /** DM解析の共通プロンプト（単体でもフォルダまとめでも同じ観点） */

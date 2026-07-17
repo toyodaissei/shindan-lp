@@ -41,8 +41,9 @@ function autoRunAll(manual) {
 
   // 🆕 DM録画/スクショ 解析
   safe_(function () {
-    var got = ingestDmRecordings();
-    if (got) lines.push('📹 DMの録画/スクショを ' + got + ' 件、解析しました');
+    var r = ingestDmRecordings() || { processed: 0, errors: [] };
+    if (r.processed) lines.push('📹 DMの録画/スクショを ' + r.processed + ' 件、解析しました');
+    (r.errors || []).forEach(function (e) { lines.push('⚠ 取り込めなかった案件: ' + e); });
   }, 'DM解析');
 
   if (CONFIG.APPROVAL_MODE) {

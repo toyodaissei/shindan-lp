@@ -8,6 +8,26 @@
  * ============================================================
  */
 
+/**
+ * Gemini呼び出し用のフェッチ（一時的な混雑 429/500/503 は自動リトライ）。
+ * 2s→4s→8s→16s と待って最大5回試す。GAS実行時間の都合で上限は控えめ。
+ */
+function geminiFetch_(url, options) {
+  var delay = 2000, res;
+  for (var i = 0; i < 5; i++) {
+    res = UrlFetchApp.fetch(url, options);
+    var code = res.getResponseCode();
+    if ((code === 429 || code === 500 || code === 503) && i < 4) {
+      Logger.log('Gemini混雑(' + code + ') リトライ ' + (i + 1) + '回目 … ' + (delay / 1000) + '秒待機');
+      Utilities.sleep(delay);
+      delay = Math.min(delay * 2, 16000);
+      continue;
+    }
+    return res;
+  }
+  return res;
+}
+
 /** テキストプロンプト → 文字列を返す */
 function callGemini_(prompt, opts) {
   opts = opts || {};
@@ -35,7 +55,7 @@ function callGemini_(prompt, opts) {
     payload.systemInstruction = { parts: [{ text: opts.system }] };
   }
 
-  var res = UrlFetchApp.fetch(url, {
+  var res = geminiFetch_(url, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify(payload),
@@ -145,7 +165,7 @@ function analyzeVideo_(blob, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var genRes = UrlFetchApp.fetch(base + '/v1beta/models/' + model + ':generateContent?key=' + key, {
+  var genRes = geminiFetch_(base + '/v1beta/models/' + model + ':generateContent?key=' + key, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify(payload),
@@ -198,7 +218,7 @@ function analyzeImage_(blob, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var res = UrlFetchApp.fetch(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
+  var res = geminiFetch_(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
     method: 'post', contentType: 'application/json',
     payload: JSON.stringify(payload), muteHttpExceptions: true
   });
@@ -232,7 +252,7 @@ function analyzeImages_(blobs, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var res = UrlFetchApp.fetch(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
+  var res = geminiFetch_(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
     method: 'post', contentType: 'application/json',
     payload: JSON.stringify(payload), muteHttpExceptions: true
   });

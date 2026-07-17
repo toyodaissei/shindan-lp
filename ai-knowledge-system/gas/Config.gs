@@ -56,7 +56,8 @@ var CONFIG = {
   GEMINI_THINKING_BUDGET: 0,
 
   // ---- 挙動 ----
-  MAX_PROCESS_PER_RUN: 20,   // 1回の自動処理で捌く最大件数（API/時間の節約）
+  MAX_PROCESS_PER_RUN: 4,    // 1回の処理で捌く最大件数。動画は解析が重くGASの実行時間(約6分)を
+                             // 超えやすいので少なめに。残りは次回の実行/トリガーで自動的に続きを処理。
   REPORT_DAYS:         7,    // 週次レポートで集計する日数
   TIMEZONE:            'Asia/Tokyo',
 

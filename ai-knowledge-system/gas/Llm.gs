@@ -210,6 +210,40 @@ function analyzeImage_(blob, prompt, opts) {
   return text;
 }
 
+/**
+ * 複数のスクショ(画像)をまとめて Gemini に解析させる（会話の時系列を1件として読む）。
+ */
+function analyzeImages_(blobs, prompt, opts) {
+  opts = opts || {};
+  if (!blobs || !blobs.length) throw new Error('画像がありません');
+  var key = prop_('GEMINI_API_KEY', true);
+  var model = opts.model || CONFIG.GEMINI_MODEL_VIDEO;
+  var parts = blobs.map(function (bl) {
+    return { inlineData: { mimeType: bl.getContentType() || 'image/png', data: Utilities.base64Encode(bl.getBytes()) } };
+  });
+  parts.push({ text: prompt });
+  var payload = {
+    contents: [{ role: 'user', parts: parts }],
+    generationConfig: {
+      temperature: opts.temperature != null ? opts.temperature : 0.3,
+      maxOutputTokens: opts.maxTokens || 8192
+    }
+  };
+  if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
+  applyThinkingConfig_(payload.generationConfig);
+
+  var res = UrlFetchApp.fetch(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
+    method: 'post', contentType: 'application/json',
+    payload: JSON.stringify(payload), muteHttpExceptions: true
+  });
+  var text = parseGeminiResponse_(res);
+  if (opts.json) {
+    try { return JSON.parse(text); }
+    catch (e) { var m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw e; }
+  }
+  return text;
+}
+
 /** Gemini レスポンス共通パーサ */
 function parseGeminiResponse_(res) {
   var code = res.getResponseCode();

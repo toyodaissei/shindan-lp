@@ -28,13 +28,46 @@ function geminiFetch_(url, options) {
   return res;
 }
 
+/** 使うモデルの候補（優先順）。opts.model 指定時はそれだけ、無ければCONFIGのフォールバック順 */
+function modelsFor_(opts) {
+  if (opts && opts.model) return [opts.model];
+  if (CONFIG.GEMINI_MODELS && CONFIG.GEMINI_MODELS.length) return CONFIG.GEMINI_MODELS;
+  return [CONFIG.GEMINI_MODEL];
+}
+
+/**
+ * payloadを generateContent に投げてテキストを返す。
+ *  - 一時的な混雑(429/500/503)は geminiFetch_ が待って再試行
+ *  - それでもダメ / モデル未提供(404) の場合は次の候補モデルへ自動フォールバック
+ */
+function geminiGenerateText_(payload, opts) {
+  var key = prop_('GEMINI_API_KEY', true);
+  var models = modelsFor_(opts);
+  var lastBody = '';
+  for (var i = 0; i < models.length; i++) {
+    var url = CONFIG.GEMINI_API_BASE + '/v1beta/models/' + models[i] + ':generateContent?key=' + key;
+    var res = geminiFetch_(url, {
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify(payload), muteHttpExceptions: true
+    });
+    var code = res.getResponseCode();
+    if (code === 200) {
+      if (i > 0) Logger.log('フォールバック成功: ' + models[i] + ' を使用');
+      return parseGeminiResponse_(res);
+    }
+    lastBody = res.getContentText();
+    if (i < models.length - 1 && (code === 404 || code === 503 || code === 429 || code === 500)) {
+      Logger.log('モデル ' + models[i] + ' 不可(' + code + ') → 次の候補へ');
+      continue;
+    }
+    throw new Error('Gemini APIエラー(' + code + '): ' + lastBody.slice(0, 400));
+  }
+  throw new Error('全モデルで生成に失敗しました: ' + lastBody.slice(0, 400));
+}
+
 /** テキストプロンプト → 文字列を返す */
 function callGemini_(prompt, opts) {
   opts = opts || {};
-  var key = prop_('GEMINI_API_KEY', true);
-  var model = opts.model || CONFIG.GEMINI_MODEL;
-  var url = CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key;
-
   var payload = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
@@ -54,14 +87,7 @@ function callGemini_(prompt, opts) {
   if (opts.system) {
     payload.systemInstruction = { parts: [{ text: opts.system }] };
   }
-
-  var res = geminiFetch_(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
-  return parseGeminiResponse_(res);
+  return geminiGenerateText_(payload, opts);
 }
 
 /** JSONで返させて object を返す（失敗時は例外） */
@@ -165,13 +191,7 @@ function analyzeVideo_(blob, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var genRes = geminiFetch_(base + '/v1beta/models/' + model + ':generateContent?key=' + key, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
-  var text = parseGeminiResponse_(genRes);
+  var text = geminiGenerateText_(payload, opts);
 
   // 後始末（無料枠の容量節約。失敗しても無視）
   try { UrlFetchApp.fetch(base + '/v1beta/' + fileName + '?key=' + key, { method: 'delete', muteHttpExceptions: true }); } catch (e) {}
@@ -218,11 +238,7 @@ function analyzeImage_(blob, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var res = geminiFetch_(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
-    method: 'post', contentType: 'application/json',
-    payload: JSON.stringify(payload), muteHttpExceptions: true
-  });
-  var text = parseGeminiResponse_(res);
+  var text = geminiGenerateText_(payload, opts);
   if (opts.json) {
     try { return JSON.parse(text); }
     catch (e) { var m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw e; }
@@ -252,11 +268,7 @@ function analyzeImages_(blobs, prompt, opts) {
   if (opts.json) payload.generationConfig.responseMimeType = 'application/json';
   applyThinkingConfig_(payload.generationConfig);
 
-  var res = geminiFetch_(CONFIG.GEMINI_API_BASE + '/v1beta/models/' + model + ':generateContent?key=' + key, {
-    method: 'post', contentType: 'application/json',
-    payload: JSON.stringify(payload), muteHttpExceptions: true
-  });
-  var text = parseGeminiResponse_(res);
+  var text = geminiGenerateText_(payload, opts);
   if (opts.json) {
     try { return JSON.parse(text); }
     catch (e) { var m = text.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw e; }

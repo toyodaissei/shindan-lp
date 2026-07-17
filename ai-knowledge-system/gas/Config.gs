@@ -50,6 +50,16 @@ var CONFIG = {
   GEMINI_MODEL_VIDEO: 'gemini-3-flash-preview',   // 画面録画の視聴解析（マルチモーダル）
   GEMINI_API_BASE:    'https://generativelanguage.googleapis.com',
 
+  //  モデルのフォールバック順：先頭が混雑(503)/未提供(404)なら自動で次を試す。
+  //  プレビュー版は混みやすいので、安定版を後ろに並べておくと通りやすい。
+  //  AI Studioで使えるモデルに合わせて自由に並べ替え・追加してください。
+  GEMINI_MODELS: [
+    'gemini-3-flash-preview',
+    'gemini-flash-latest',
+    'gemini-2.5-flash',
+    'gemini-2.0-flash'
+  ],
+
   //  思考(thinking)型モデル対策：
   //   思考トークンが出力上限を食い尽くし回答が空になるのを防ぐため思考をスキップ。
   //   0=思考オフ。思考型でない旧モデルに戻す場合は null にすると本設定を送りません。

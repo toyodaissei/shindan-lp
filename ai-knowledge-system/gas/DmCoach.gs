@@ -165,28 +165,31 @@ function cleanDmErrorRows_(sh) {
   }
 }
 
-/** DM解析の共通プロンプト（単体でもフォルダまとめでも同じ観点） */
+/** ナレッジ解析の共通プロンプト（DM/商談/トークスクリプト/マーケ導線など何でも対応） */
 function dmAnalysisPrompt_() {
-  return 'これは当社の営業担当者が、SNS(Threads/Instagram/X/LINE等)のDM・スレッドで行った「実際の営業・開拓のやり取り」の' +
-    '画面録画またはスクリーンショットです。画面に映る事実だけを正確に読み取り、営業手法を分析してください。\n' +
-    '【厳守】録画に映っていない事柄を推測で足さない。特に「相手のフォロワーに広告を出す/リーチを買う」等の' +
-    'インフルエンサーマーケティングを、実際にそうでない限り絶対に当てはめない。\n' +
+  return 'これは当社の「実際の営業・マーケ活動」の記録（画面録画/スクリーンショット/オンライン商談の録画 等）です。' +
+    'これから他の社員が真似して再現できるよう、映っている事実だけを正確に読み取り分析してください。\n' +
+    '対象は多岐にわたります（例：SNS DMでの営業・代理店/協業開拓、Zoom等のオンライン商談、電話営業、' +
+    'トークスクリプト、アウト返し(反論処理)、新しいマーケ施策・集客導線 など）。まず種類(kind)を判定し、その実態に沿って分析すること。\n' +
+    '【厳守】記録に映っていない事柄を推測で足さない。特に、実際にそうでない限り別のビジネスモデル' +
+    '（例：インフルエンサーマーケ/相手のフォロワーに広告を売る 等）を勝手に当てはめない。\n' +
     '必ず次のJSONのみ返す:\n' +
     '{' +
-    '"objective":"この営業の目的を一言で。録画の実態に基づく。例:『代理店/協業パートナーの開拓(相手にハブになってもらい顧客/学生を送客してもらう)』『自社送客の直接営業』『特定商材の販売』など",' +
-    '"customer":"相手(アカウント名/相手の属性)。分からなければ推定や空文字",' +
-    '"product":"案件/トピック名(例:学生送客の代理店開拓 / 〇〇商材の販売 など、今回のスコープ)",' +
-    '"platform":"チャネル(Instagram/InstagramDM/Threads/ThreadsDM/X/LINE/公式LINE/Facebook/その他)",' +
+    '"kind":"ナレッジの種類(例: DM営業 / 代理店・協業開拓 / オンライン商談 / 電話営業 / トークスクリプト / アウト返し / マーケ施策・集客導線 / その他)",' +
+    '"objective":"この活動の目的を一言で。実態に基づく",' +
+    '"customer":"相手(アカウント名/相手の属性/顧客像)。分からなければ推定や空文字",' +
+    '"product":"案件/商材/トピック名(今回のスコープ)",' +
+    '"platform":"チャネル/場面(Instagram/Threads/X/LINE/公式LINE/Facebook/Zoom/電話/対面/その他)",' +
     '"summary":"実際に何が行われたかの要約(4〜6行)",' +
-    '"technique":"使われた営業手法・トークの型(改行区切りで具体的に。例:定型文で打診→アポ取り→ミート設定 など実際の流れ)",' +
+    '"technique":"使われた手法・トークの型・言い回し(改行区切りで具体的に。実際の流れに忠実に)",' +
     '"reaction":"相手の反応・温度感",' +
-    '"outcome":"未返信 / 返信 / 面談 / 提携 のいずれか(判断できなければ最も近いもの。提携=成約)",' +
-    '"sent":送ったメッセージ数(整数),"replies":相手の返信数(整数),' +
+    '"outcome":"結果を一言(例: 未返信/返信/面談/受注/提携/継続 など、実態に最も近いもの)",' +
+    '"sent":"送信/接触の回数(分かれば整数、不明は0)","replies":"相手の反応/返信の回数(分かれば整数、不明は0)",' +
     '"good":"良かった点(なぜ効いたか)",' +
-    '"bad":"改善点(もっとこうすれば返信/面談/提携が増えるか)",' +
-    '"messages":[{"step":1,"message":"実際に送った文面(できるだけ原文)","intent":"その一手の狙い/技術","reaction":"相手の反応","effect":"良/普/悪"}]' +
+    '"bad":"改善点(もっとこうすれば成果が上がるか)",' +
+    '"messages":[{"step":1,"message":"実際の発言/文面(できるだけ原文)","intent":"その一手の狙い/技術","reaction":"相手の反応","effect":"良/普/悪"}]' +
     '}\n' +
-    '文面は新人が真似できるよう、できるだけ原文に近い形で書き出すこと。';
+    '発言・文面は新人が真似できるよう、できるだけ原文に近い形で書き出すこと。';
 }
 
 /** 単体ファイル(動画/画像)を解析 */
@@ -263,7 +266,10 @@ function writeDmCase_(sh, file, a) {
   row[DM_COL.CUSTOMER - 1] = a.customer || file.getName();
   row[DM_COL.PRODUCT - 1] = a.product || '';
   row[DM_COL.PLATFORM - 1] = a.platform || '';
-  row[DM_COL.SUMMARY - 1] = (a.objective ? '【営業の目的】' + a.objective + '\n' : '') + (a.summary || '');
+  row[DM_COL.SUMMARY - 1] =
+    (a.kind ? '【種類】' + a.kind + '\n' : '') +
+    (a.objective ? '【目的】' + a.objective + '\n' : '') +
+    (a.summary || '');
   row[DM_COL.TECHNIQUE - 1] = a.technique || '';
   row[DM_COL.REACTION - 1] = a.reaction || '';
   row[DM_COL.OUTCOME - 1] = a.outcome || '';
@@ -383,10 +389,9 @@ var DM_PROPOSAL_SCHEMA = {
             type: 'object',
             properties: {
               title: { type: 'string' }, why: { type: 'string' }, 'try': { type: 'string' },
-              expReplyRate: { type: 'string' }, expMeetingRate: { type: 'string' },
-              expPartnerRate: { type: 'string' }, basis: { type: 'string' }
+              metrics: { type: 'string' }, basis: { type: 'string' }
             },
-            required: ['title', 'why', 'try', 'expReplyRate', 'expMeetingRate', 'expPartnerRate', 'basis']
+            required: ['title', 'why', 'try', 'metrics', 'basis']
           }
         },
         experiments: { type: 'array', items: { type: 'string' } }
@@ -402,25 +407,26 @@ function proposeDmStrategy_(caseRow) {
   var bestPatterns = collectBestPatterns_();
 
   var prompt =
-    'あなたは営業の「型化(再現性化)」のプロです。以下は、当社の営業担当者が実際に行った営業・開拓のやり取り' +
-    '(画面録画/スクショから解析済み)です。この“実際のやり方”を、他の社員がそっくり真似して再現できるマニュアルと、' +
-    'そこから発想を広げるための提案に落とします。\n' +
+    'あなたは営業・マーケの「型化(再現性化)」のプロ兼、社員教育・リスキリングの設計者です。\n' +
+    '以下は、当社のメンバーが実際に行った活動の記録(録画/スクショから解析済み)です。' +
+    'この“実際のやり方”を、他の社員がそっくり真似して再現でき、かつ発想も広がる「教育教材」に落とします。\n' +
     '【最重要・絶対厳守】\n' +
-    '1) 提案は必ず「録画から読み取った実際の営業目的・相手・手法」に忠実に沿わせる。' +
-    '勝手に別のビジネスモデル(例:インフルエンサーマーケティング／相手のフォロワーにリーチや広告を売る 等)を持ち込まない。\n' +
-    '2) 下記「営業の目的」が代理店/協業パートナーの開拓(相手にハブになってもらい顧客/学生を送客してもらう)なら、' +
-    'その"協業関係を結ぶ"提案にする。相手のフォロワーに広告を出す話には絶対にしない。\n' +
-    '3) 案件のトピック(例:学生送客/特定商材/自社送客 など)に厳密にスコープを合わせ、他トピックを混ぜない。\n' +
-    '4) マニュアル型=録画の実際のやり方（定型文→アポ→ミート等）を新人がそのまま再現できる手順に。' +
-    '提案型=そのやり方を土台に、新しいアイデアが湧くきっかけ(切り口＋数値)に。\n' +
+    '1) 提案は必ず「記録から読み取った実際の目的・相手・手法」に忠実に。勝手に別のビジネスモデルを持ち込まない。\n' +
+    '2) 下記の「種類(kind)」に最適な構成・KPIで作る:\n' +
+    '   ・DM営業/代理店・協業開拓 → チャネル別のコピペ文面＋返信率/面談化率/提携率\n' +
+    '   ・オンライン商談/電話営業 → 会話フロー(掴み→ヒアリング→提案→アウト返し→クロージング)＋受注率など\n' +
+    '   ・トークスクリプト/アウト返し → そのまま使える言い回し集＋切り返し\n' +
+    '   ・マーケ施策/集客導線 → 手順＋想定CVR/CTR/CPA など\n' +
+    '3) 案件のトピックに厳密にスコープを合わせ、他トピックを混ぜない。\n' +
+    '4) マニュアル型=記録の実際のやり方を新人が1→10でそのまま再現できる手順に(教育教材として)。' +
+    '提案型=そのやり方を土台に新しいアイデアが湧くきっかけ(切り口＋数値)に。\n' +
     '過去の高成績パターンも学習材料に使ってください。\n\n' +
-    '=== 対象案件 ===\n' +
-    '相手(エージェント)/案件: ' + caseRow[DM_COL.CUSTOMER - 1] + '\n' +
-    '案件/商材: ' + caseRow[DM_COL.PRODUCT - 1] + '\n' +
-    '主なチャネル: ' + caseRow[DM_COL.PLATFORM - 1] +
-      '（想定チャネル: Instagram/InstagramDM/Threads/ThreadsDM/X/LINE/公式LINE/Facebook）\n' +
-    '現状の要約: ' + caseRow[DM_COL.SUMMARY - 1] + '\n' +
-    '使った手法: ' + caseRow[DM_COL.TECHNIQUE - 1] + '\n' +
+    '=== 対象ナレッジ ===\n' +
+    '相手/顧客像: ' + caseRow[DM_COL.CUSTOMER - 1] + '\n' +
+    'トピック/商材: ' + caseRow[DM_COL.PRODUCT - 1] + '\n' +
+    'チャネル/場面: ' + caseRow[DM_COL.PLATFORM - 1] + '\n' +
+    '要約(種類・目的を含む): ' + caseRow[DM_COL.SUMMARY - 1] + '\n' +
+    '使った手法/言い回し: ' + caseRow[DM_COL.TECHNIQUE - 1] + '\n' +
     '相手の反応: ' + caseRow[DM_COL.REACTION - 1] + ' / 結果: ' + caseRow[DM_COL.OUTCOME - 1] + '\n' +
     '改善点メモ: ' + caseRow[DM_COL.BAD - 1] + '\n\n' +
     '=== 過去の高成績パターン(学習データ) ===\n' + bestPatterns + '\n\n' +
@@ -428,26 +434,23 @@ function proposeDmStrategy_(caseRow) {
     '{' +
     '"variables":[{"key":"{{相手の名前}}","desc":"何を入れるか","example":"例"}],' +
     '"manual":{' +
-      '"goal":"このマニュアルで到達するゴール(例:面談アポ獲得)",' +
-      '"steps":[{"no":1,"action":"やること(新人が迷わない粒度)","channel":"どのチャネルで送るか","script":"そのままコピペで送れる文面。差し込み変数は必ず {{変数名}} 形式で埋め込む","timing":"送るタイミング/条件","point":"つまづき注意"}],' +
-      '"talkScript":{"opening":"面談/通話の掴み(変数可)","hearing":["ヒアリングで聞く質問"],"proposal":"案件の提案トーク","objection":[{"if":"よくある断り/懸念","say":"切り返しトーク"}],"closing":"クロージング(次アクション確定)"},' +
+      '"goal":"このマニュアルで到達するゴール",' +
+      '"steps":[{"no":1,"action":"やること(新人が迷わない粒度)","channel":"どのチャネル/場面か","script":"そのまま使える文面・言い回し。差し込み箇所は {{変数名}} 形式で","timing":"タイミング/条件","point":"つまづき注意"}],' +
+      '"talkScript":{"opening":"掴み(変数可)","hearing":["ヒアリングで聞く質問"],"proposal":"提案トーク","objection":[{"if":"よくある断り/懸念","say":"切り返しトーク(アウト返し)"}],"closing":"クロージング(次アクション確定)"},' +
       '"ng":["やってはいけないこと"]' +
     '},' +
     '"ideas":{' +
-      '"angles":[{"title":"切り口/アイデア名","why":"なぜ効くかの仮説","try":"具体的な試し方","expReplyRate":"想定返信率(例:25〜35%)","expMeetingRate":"想定 面談化率(例:8〜12%)","expPartnerRate":"想定 提携(成約)率(例:3〜5%)","basis":"その数値の根拠(過去データや一般値)"}],' +
-      '"experiments":["A/Bで試すべき比較案(数値で検証できる形)"]' +
+      '"angles":[{"title":"切り口/アイデア名","why":"なぜ効くかの仮説","try":"具体的な試し方","metrics":"この種類に合う想定KPI(例: 返信率25〜35%/面談化率10% 、商談なら受注率、マーケならCVR/CTR等)","basis":"その数値の根拠(過去データや一般値)"}],' +
+      '"experiments":["数値で検証すべきA/B比較案"]' +
     '}' +
     '}\n' +
     '重要:\n' +
-    '・文面テンプレは必ず {{変数名}} の差し込み形式にする。数値や固有名詞の空欄に「◯◯」等の伏字を絶対に使わず、' +
-    '必ず {{想定報酬額}} {{想定月収}} {{フォロワー数}} {{実績数値}} のような変数にする。使った変数は漏れなく "variables" に列挙する。\n' +
-    '・steps は各チャネル特性(Instagram/ThreadsのDMは短く軽快、公式LINEは段階的、Xは簡潔、Facebookはやや丁寧)を踏まえ、6〜10個。\n' +
-    '・"talkScript" は面談/通話でそのまま読めるレベルで具体的に。\n' +
-    '・"talkScript.objection" には、この案件の目的・相手に即して相手が実際に抱く懸念への切り返しを2〜4個入れる' +
-    '(例:協業のメリットが不明/手間がかかりそう/実績・信頼性は?/既に他社とやっている 等、案件に合うものを選ぶ)。' +
-    '案件と無関係な一般論の懸念は入れない。\n' +
-    '・"ideas" は必ず 想定返信率・面談化率・提携率 の3数値を添え、さらにアイデアが広がる“きっかけ”にする。\n' +
-    '・"basis"(根拠)は、上記「過去の高成績パターン」に実データがあればそれを引用し、無い場合は「一般値/仮説」と明記する。';
+    '・文面テンプレは {{変数名}} の差し込み形式。数値や固有名詞の空欄に「◯◯」等の伏字を使わず、必ず変数にする。使った変数は "variables" に列挙。\n' +
+    '・steps はチャネル/場面の特性を踏まえ、6〜10個。\n' +
+    '・"talkScript" は面談/通話でそのまま読めるレベルで具体的に(商談・電話系では特に重要)。\n' +
+    '・"talkScript.objection" は、この案件の相手が実際に抱く懸念への切り返しを2〜4個(案件に合うものだけ。一般論は入れない)。\n' +
+    '・"ideas.angles.metrics" は種類に合った想定KPIを必ず数値で添える。\n' +
+    '・"basis" は、過去の高成績パターンに実データがあれば引用、無ければ「一般値/仮説」と明記。';
 
   var o = callGeminiJson_(prompt, { temperature: 0.6, maxTokens: 8192, schema: DM_PROPOSAL_SCHEMA });
 
@@ -650,9 +653,8 @@ function writeDmProposalDoc_(customer, product, platform, o, fileId) {
     docSub_(b, '◆ ' + (a.title || ''), S.idea);
     if (a.why)  docText_(b, 'なぜ効く：' + a.why, { after: 2 });
     if (a['try']) docText_(b, '試し方：' + a['try'], { after: 3 });
-    var kpi = b.appendParagraph('📊 想定 返信率 ' + (a.expReplyRate || '-') +
-      '　｜　面談化率 ' + (a.expMeetingRate || '-') +
-      '　｜　提携(成約)率 ' + (a.expPartnerRate || '-'));
+    var kpiText = a.metrics || a.expReplyRate || '-';
+    var kpi = b.appendParagraph('📊 想定KPI： ' + kpiText);
     kpi.setSpacingAfter(2).setIndentStart(8);
     kpi.editAsText().setBackgroundColor('#fbeecf').setForegroundColor(S.navy).setBold(true).setFontSize(11);
     if (a.basis) docText_(b, '根拠：' + a.basis, { color: S.gray, size: 10, after: 6 });
@@ -743,7 +745,7 @@ function generateDmReport() {
   b.insertParagraph(0, title).setHeading(DocumentApp.ParagraphHeading.HEADING1);
   doc.saveAndClose();
 
-  var to = prop_('REPORT_RECIPIENTS', false);
+  var to = recipients_();
   if (to) {
     MailApp.sendEmail({ to: to, subject: title, body: body + '\n\n【数値】\n' + stats + '\nレポートDoc: ' + doc.getUrl() });
   }

@@ -177,14 +177,16 @@ function generateReport_(days, label) {
   b.insertParagraph(1, report);
   doc.saveAndClose();
 
-  // メール送付
-  var to = prop_('REPORT_RECIPIENTS', true);
-  MailApp.sendEmail({
-    to: to,
-    subject: title,
-    body: report + '\n\n----\nレポートDoc: ' + doc.getUrl() +
-      '\nNotebookLM母艦Doc: ' + DocumentApp.openById(prop_('NOTEBOOKLM_DOC_ID', true)).getUrl()
-  });
+  // メール送付（配信先シート＋REPORT_RECIPIENTS）
+  var to = recipients_();
+  if (to) {
+    MailApp.sendEmail({
+      to: to,
+      subject: title,
+      body: report + '\n\n----\nレポートDoc: ' + doc.getUrl() +
+        '\nNotebookLM母艦Doc: ' + DocumentApp.openById(prop_('NOTEBOOKLM_DOC_ID', true)).getUrl()
+    });
+  }
 
   logReport_(label + '経営レポート', title, to);
   Logger.log(label + 'レポートを送信しました → ' + to);

@@ -116,7 +116,7 @@ function handleApproveAction_(e) {
   if (p.action === 'send') {
     var docUrl = row[DM_COL.PROPOSAL_URL - 1];
     if (!docUrl) return htmlPage_('まだ提案がありません', '先に「✅ 提案を作成」を押してください。');
-    var to = prop_('REPORT_RECIPIENTS', false);
+    var to = recipients_();
     if (to) {
       MailApp.sendEmail({
         to: to,

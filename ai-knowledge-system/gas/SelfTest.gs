@@ -125,9 +125,9 @@ function demoDmProposal() {
 
 /** メールが届くかだけを確かめるテスト（REPORT_RECIPIENTS宛に1通送る） */
 function testEmail() {
-  var to = prop_('REPORT_RECIPIENTS', false);
+  var to = recipients_();
   if (!to) {
-    var msg = '❌ REPORT_RECIPIENTS が未設定です。スクリプトプロパティに送信先メールを入れてください。';
+    var msg = '❌ 送信先がありません。「配信先」シートにメールを入れるか、REPORT_RECIPIENTS を設定してください。';
     Logger.log(msg); return msg;
   }
   MailApp.sendEmail(to, '【AI営業スイート】メール送信テスト',

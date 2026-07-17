@@ -86,8 +86,8 @@ function autoRunAll(manual) {
   var body = head + '\n\n' + (hasNew ? lines.join('\n') + '\n\n' : '') +
     '── 保存場所 ──\n' + refs.join('\n');
 
-  // 📧 メール通知（毎回：手動実行 or 新規があった時）→ REPORT_RECIPIENTS 宛
-  var to = prop_('REPORT_RECIPIENTS', false);
+  // 📧 メール通知（毎回：手動実行 or 新規があった時）→ 配信先シート＋REPORT_RECIPIENTS
+  var to = recipients_();
   if (to) {
     try {
       MailApp.sendEmail(to,

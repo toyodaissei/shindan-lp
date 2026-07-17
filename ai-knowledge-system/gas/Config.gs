@@ -40,6 +40,7 @@ var CONFIG = {
   SHEET_DM:        'DM案件',         // 🆕 DM営業の案件と録画解析結果
   SHEET_DM_MSG:    'DMメッセージ',    // 🆕 録画から抽出した個々のDM文面（学習用）
   SHEET_REPORTLOG: 'レポート履歴',    // 全システム共通のレポート履歴
+  SHEET_RECIPIENTS: '配信先',         // 結果メールの送信先を管理する“管理画面”シート
 
   // ---- 使用するLLM (Gemini) ----
   //  Workspace と相性が良く、無料枠があり、動画も直接解析できるため既定は Gemini。

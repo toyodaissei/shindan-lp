@@ -29,6 +29,15 @@ function setup() {
   sheet_(CONFIG.SHEET_DM, DM_HEADERS);
   sheet_(CONFIG.SHEET_DM_MSG, DM_MSG_HEADERS);
   sheet_(CONFIG.SHEET_REPORTLOG, ['日時', '種別', 'タイトル', '送信先']);
+  // 配信先“管理画面”シート（ここにメールを足すと、その人にも結果が届く）
+  var rc = sheet_(CONFIG.SHEET_RECIPIENTS, ['メールアドレス', '名前(任意)', '受信 (空欄=送る / OFFで停止)']);
+  if (rc.getLastRow() < 2) {
+    var seed = props.getProperty('REPORT_RECIPIENTS') || '';
+    seed.split(',').forEach(function (e) {
+      var em = e.trim();
+      if (em) rc.appendRow([em, '管理者', '']);
+    });
+  }
   // デフォルトの空シートを掃除
   var def = ss.getSheetByName('シート1') || ss.getSheetByName('Sheet1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);

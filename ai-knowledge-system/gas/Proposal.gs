@@ -74,7 +74,7 @@ function processDeals() {
       sh.getRange(rowNum, DEAL_COL.PROCESSED_AT).setValue(
         Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'yyyy-MM-dd HH:mm'));
 
-      var to = r[DEAL_COL.OWNER_EMAIL - 1] || prop_('REPORT_RECIPIENTS', false);
+      var to = r[DEAL_COL.OWNER_EMAIL - 1] || recipients_();
       if (to) {
         MailApp.sendEmail({
           to: to,

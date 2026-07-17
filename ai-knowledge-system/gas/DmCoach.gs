@@ -132,19 +132,29 @@ function analyzeDmCaseFromFolder_(folder) {
     if (m.indexOf('image') === 0) imgs.push(f);
     else if (m.indexOf('video') === 0) vids.push(f);
   }
-  // 名前順（01,02… の並び＝会話の時系列）
-  imgs.sort(function (x, y) { return x.getName() < y.getName() ? -1 : 1; });
+  // 作成/アップロード日時の順に並べる（番号付け不要。撮った順＝会話の時系列）
+  sortByCreated_(imgs);
   var prompt = dmAnalysisPrompt_();
   if (imgs.length) {
     var blobs = imgs.slice(0, 12).map(function (f) { return f.getBlob(); }); // API負荷対策で最大12枚
     return analyzeImages_(blobs,
-      prompt + '\n※複数枚のスクショは時系列（会話の流れ）です。順に読み取り、全体を1件の営業として分析してください。',
+      prompt + '\n※複数枚のスクショは同じ会話の断片で、おおむね時系列順に並べてあります。' +
+      '画面内のタイムスタンプや文脈から必要なら順序を補正し、全体を1件の営業として分析してください。',
       { json: true, maxTokens: 8192 });
   }
   if (vids.length) {
     return analyzeVideo_(vids[0].getBlob(), prompt, { json: true, maxTokens: 8192 });
   }
   return null;
+}
+
+/** 作成/アップロード日時の昇順に並べる（同時刻は名前で安定化）。番号付け不要にするための自動整列 */
+function sortByCreated_(files) {
+  files.sort(function (a, b) {
+    var d = a.getDateCreated().getTime() - b.getDateCreated().getTime();
+    return d !== 0 ? d : (a.getName() < b.getName() ? -1 : 1);
+  });
+  return files;
 }
 
 /** writeDmCase_ に渡す簡易ファイル風オブジェクト（IDと名前だけ） */
@@ -435,7 +445,7 @@ function embedSourceMedia_(b, id) {
         if (m.indexOf('image') === 0) imgs.push(f);
         else if (m.indexOf('video') === 0) vids.push(f);
       }
-      imgs.sort(function (x, y) { return x.getName() < y.getName() ? -1 : 1; });
+      sortByCreated_(imgs);
       imgs.forEach(function (f, i) { embedOneImage_(b, f, (i + 1) + '/' + imgs.length + '　' + f.getName()); });
       vids.forEach(function (f) { linkOneVideo_(b, f); });
       if (!imgs.length && !vids.length) docText_(b, '（このフォルダに画像/動画がありません）', { color: S.gray, size: 9, after: 8 });

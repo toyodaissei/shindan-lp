@@ -97,6 +97,34 @@ function ingestDmRecordings() {
   return { processed: processed, errors: errors };
 }
 
+/**
+ * 診断用：コードが「DM営業_画面録画」フォルダで実際に何を見ているかをログ出力。
+ * 「対象なし」の原因（場所違い/形式違い/入れ子）を特定するために手動実行する。
+ */
+function debugDmFolder() {
+  var id = prop_('DM_RECORDINGS_FOLDER', true);
+  var root = DriveApp.getFolderById(id);
+  var out = ['DM_RECORDINGS_FOLDER: 「' + root.getName() + '」', 'URL: ' + root.getUrl(), ''];
+
+  var subs = root.getFolders(), nsub = 0;
+  while (subs.hasNext()) {
+    var s = subs.next(); nsub++;
+    var items = [], fi = s.getFiles();
+    while (fi.hasNext()) { var f = fi.next(); items.push('    - ' + f.getName() + '  [' + f.getMimeType() + ']'); }
+    out.push('📁 サブフォルダ「' + s.getName() + '」: ' + items.length + '件');
+    if (items.length) out.push(items.join('\n'));
+  }
+  if (!nsub) out.push('（サブフォルダは0件）');
+
+  var loose = [], lf = root.getFiles();
+  while (lf.hasNext()) { var f2 = lf.next(); loose.push(f2.getName() + ' [' + f2.getMimeType() + ']'); }
+  out.push('', '📄 直下ファイル: ' + (loose.length ? loose.join(', ') : '（なし）'));
+
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}
+
 /** 成功状態(処理済み)のIDだけを返す。失敗/対象なしは含めない＝再挑戦できる */
 function getKnownDoneIds_(sh) {
   var map = {};

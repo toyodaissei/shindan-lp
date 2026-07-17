@@ -87,8 +87,8 @@ function ensureFolder_(propKey, name) {
 /** 定期トリガーを登録（重複登録は自動で防止） */
 function installTriggers() {
   removeTriggers_();
-  // ぜんぶ自動の司令塔：15分毎に一括処理（誰もボタンを押さなくてよい）
-  ScriptApp.newTrigger('autoRunAll').timeBased().everyMinutes(15).create();
+  // ぜんぶ自動の司令塔：15分毎に一括処理（誰もボタンを押さなくてよい／新規がある時だけ通知）
+  ScriptApp.newTrigger('autoRunScheduled').timeBased().everyMinutes(15).create();
   // レポート：毎週月曜 8:00（経営レポート & DM営業レポートをまとめて）
   ScriptApp.newTrigger('autoWeeklyReports').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
   // スプレッドシートを開いた時に「AI営業スイート」メニューを出す（誰でも手動実行できる）

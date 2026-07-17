@@ -17,11 +17,17 @@ function runNow() {
   autoRunAll(true);
 }
 
+/** 時間トリガー用：新規がある時だけ通知（トリガーはイベント引数を渡すので専用に分ける） */
+function autoRunScheduled() {
+  autoRunAll(false);
+}
+
 /**
  * @param {boolean} manual  手動実行(メニュー)なら true。true のときは結果が無くても
  *                          「実行しました」メールを必ず送る。自動トリガーは新規がある時だけ送る。
  */
 function autoRunAll(manual) {
+  manual = (manual === true);   // ← トリガーが渡すイベント引数を手動と誤認しないよう厳密化
   var lines = [];
 
   // 🅱 ナレッジ要約（NotebookLM母艦Docにも自動追記）

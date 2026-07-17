@@ -112,7 +112,7 @@ function onOpen() {
     .addItem('② 自動運用をON(トリガー登録)', 'installTriggers')
     .addItem('③ Chat通知テスト', 'testChatNotify')
     .addSeparator()
-    .addItem('▶ 今すぐ全部まとめて実行', 'autoRunAll')
+    .addItem('▶ 今すぐ全部まとめて実行（結果をメール送信）', 'runNow')
     .addSeparator()
     .addItem('🅱 ナレッジ要約を今すぐ', 'processPending')
     .addItem('🅱 週次経営レポートを今すぐ', 'generateWeeklyReport')

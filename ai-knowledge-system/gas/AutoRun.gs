@@ -12,7 +12,16 @@
  * ============================================================
  */
 
-function autoRunAll() {
+/** メニュー「▶ 今すぐ全部まとめて実行」用：手動実行なので毎回メールを送る */
+function runNow() {
+  autoRunAll(true);
+}
+
+/**
+ * @param {boolean} manual  手動実行(メニュー)なら true。true のときは結果が無くても
+ *                          「実行しました」メールを必ず送る。自動トリガーは新規がある時だけ送る。
+ */
+function autoRunAll(manual) {
   var lines = [];
 
   // 🅱 ナレッジ要約（NotebookLM母艦Docにも自動追記）
@@ -26,7 +35,7 @@ function autoRunAll() {
     var deals = processDeals() || [];
     if (deals.length) {
       lines.push('📊 商談の提案書を ' + deals.length + ' 件つくりました');
-      deals.forEach(function (d) { lines.push('　・' + chatLink_(d.slideUrl, d.customer + ' 様の提案書')); });
+      deals.forEach(function (d) { lines.push('　・' + d.customer + ' 様の提案書: ' + d.slideUrl); });
     }
   }, '商談提案書');
 
@@ -48,19 +57,41 @@ function autoRunAll() {
       var props = proposeForPending() || [];
       if (props.length) {
         lines.push('📝 エージェント開拓の提案書を ' + props.length + ' 件つくりました');
-        props.forEach(function (p) { lines.push('　・' + chatLink_(p.url, p.customer + ' の提案書')); });
+        props.forEach(function (p) { lines.push('　・' + p.customer + ' の提案書: ' + p.url); });
       }
     }, 'DM提案');
   }
 
-  // 承認モードでは承認カードを個別に送るので、まとめ通知は他に新規がある時だけ
-  if (lines.length) {
-    var ss = '';
-    try { ss = '\n\n📂 ' + chatLink_(openBook_().getUrl(), 'データ一覧(スプレッドシート)'); } catch (e) {}
-    notifyChat_('✅ 自動処理が完了しました\n\n' + lines.join('\n') + ss);
+  var hasNew = lines.length > 0;
+  if (!hasNew && !manual) { Logger.log('autoRunAll: 新規なし（通知なし）'); return; }
+
+  // 参照リンク（結果の置き場所）
+  var refs = [];
+  try { refs.push('📂 データ一覧(スプレッドシート): ' + openBook_().getUrl()); } catch (e) {}
+  try {
+    var pf = prop_('PROPOSAL_FOLDER', false);
+    if (pf) refs.push('🗂 提案書フォルダ: ' + DriveApp.getFolderById(pf).getUrl());
+  } catch (e2) {}
+
+  var head = hasNew
+    ? '✅ 処理が完了しました。生成物は下記のとおりです。'
+    : 'ℹ 今回は新しく処理する対象がありませんでした（フォルダに未処理の新しいファイルが無かった可能性があります）。';
+  var body = head + '\n\n' + (hasNew ? lines.join('\n') + '\n\n' : '') +
+    '── 保存場所 ──\n' + refs.join('\n');
+
+  // 📧 メール通知（毎回：手動実行 or 新規があった時）→ REPORT_RECIPIENTS 宛
+  var to = prop_('REPORT_RECIPIENTS', false);
+  if (to) {
+    try {
+      MailApp.sendEmail(to,
+        '【AI営業スイート】実行結果 ' + Utilities.formatDate(new Date(), CONFIG.TIMEZONE, 'M/d HH:mm'),
+        body);
+    } catch (e3) { Logger.log('メール送信失敗: ' + e3); }
   } else {
-    Logger.log('autoRunAll: 新規なし（通知なし）');
+    Logger.log('REPORT_RECIPIENTS未設定のためメール送信スキップ');
   }
+  // Chat通知（設定している場合のみ）
+  notifyChat_(body);
 }
 
 /** 週次レポートもChatへ流す（トリガーから呼ぶ） */

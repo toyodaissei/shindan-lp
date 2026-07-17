@@ -56,7 +56,7 @@ function ingestDmRecordings() {
   var subs = root.getFolders();
   while (subs.hasNext() && processed < CONFIG.MAX_PROCESS_PER_RUN) {
     var sub = subs.next();
-    if (known[sub.getId()]) continue;
+    if (known[sub.getId()]) { Logger.log('スキップ(既に処理済み): ' + sub.getName()); continue; }
     try {
       var a = analyzeDmCaseFromFolder_(sub);
       if (!a) {
@@ -80,7 +80,7 @@ function ingestDmRecordings() {
     var file = files.next();
     var mime = file.getMimeType();
     if (mime.indexOf('video') !== 0 && mime.indexOf('image') !== 0) continue;
-    if (known[file.getId()]) continue;
+    if (known[file.getId()]) { Logger.log('スキップ(既に処理済み): ' + file.getName()); continue; }
     try {
       var analysis = analyzeDmRecording_(file);
       writeDmCase_(sh, file, analysis);
@@ -95,6 +95,21 @@ function ingestDmRecordings() {
 
   Logger.log('ingestDmRecordings: ' + processed + '件を解析 / エラー' + errors.length + '件');
   return { processed: processed, errors: errors };
+}
+
+/**
+ * リセット用：DM案件/DMメッセージの記録をすべて消す。
+ * 「処理済み」記録も消えるので、次の実行で全フォルダを再解析する（テスト・やり直し向け）。
+ */
+function resetDmCases() {
+  var ss = openBook_();
+  [CONFIG.SHEET_DM, CONFIG.SHEET_DM_MSG].forEach(function (name) {
+    var sh = ss.getSheetByName(name);
+    if (sh && sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
+  });
+  var msg = 'DM案件・DMメッセージをリセットしました。もう一度「▶ 今すぐ全部まとめて実行」を押すと全フォルダを再解析します。';
+  Logger.log(msg);
+  return msg;
 }
 
 /**

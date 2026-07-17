@@ -120,6 +120,7 @@ function onOpen() {
     .addItem('🆕 DM録画/スクショを取り込む', 'ingestDmRecordings')
     .addItem('🆕 DM提案を生成', 'proposeForPending')
     .addItem('🆕 DM営業レポートを今すぐ', 'generateDmReport')
+    .addItem('🔄 DM案件をリセット(全部再解析)', 'resetDmCases')
     .addToUi();
 }
 
